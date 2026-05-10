@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daftar Siswa – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .siswa-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .siswa-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+      text-decoration: none;
+      display: block;
+      color: inherit;
+    }
+    .siswa-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+      box-shadow: 0 8px 24px rgba(99,102,241,.15);
+    }
+    .siswa-avatar-lg {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      font-size: 1.8rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+      border: 3px solid var(--border);
+      transition: border-color .2s;
+    }
+    .siswa-card:hover .siswa-avatar-lg { border-color: var(--primary); }
+    .siswa-card-name { font-weight: 700; font-size: .95rem; color: var(--text-primary); margin-bottom: 2px; }
+    .siswa-card-nis  { font-size: .78rem; color: var(--text-muted); margin-bottom: 10px; }
+    .siswa-card-level {
+      display: inline-block;
+      background: var(--primary); color: #fff;
+      font-size: .72rem; font-weight: 700;
+      padding: 3px 10px; border-radius: 20px;
+      margin-bottom: 8px;
+    }
+    .siswa-xp-bar { background: var(--border); border-radius: 20px; height: 5px; overflow: hidden; }
+    .siswa-xp-fill { background: linear-gradient(90deg, var(--primary), #a855f7); height: 100%; border-radius: 20px; }
+    .siswa-badges-row { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+    .mini-badge { font-size: 1rem; }
+
+    .search-bar-wrap { margin-bottom: 20px; }
+    .search-bar-input {
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: .95rem;
+      transition: border-color .2s;
+    }
+    .search-bar-input:focus { outline: none; border-color: var(--primary); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🎓</div>
+        <div>
+          <div class="brand-name">ManajemenKelas</div>
+          <div class="brand-sub">Sistem Informasi</div>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info">
+          <div id="sidebar-name">Loading…</div>
+          <div id="sidebar-role"></div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-link" href="index.html" data-page="index.html" data-role-access="admin">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a class="nav-link" href="kas.html" data-page="kas.html" data-role-access="admin,pengurus_kas">
+        <span class="nav-icon">💰</span> Kas Kelas
+      </a>
+      <a class="nav-link" href="absensi.html" data-page="absensi.html" data-role-access="admin,pengurus_absensi">
+        <span class="nav-icon">📋</span> Absensi
+      </a>
+      <a class="nav-link" href="laporan.html" data-page="laporan.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">📈</span> Laporan
+      </a>
+      <a class="nav-link" href="leaderboard.html" data-page="leaderboard.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">🏆</span> Leaderboard
+      </a>
+      <a class="nav-link active" href="siswa.html" data-page="siswa.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">👤</span> Profil Siswa
+      </a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-link" href="index.html" data-role-access="admin">
+        <span class="nav-icon">👥</span> Kelola Akun
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logout-btn">🚪 Logout</button>
+    </div>
+  </aside>
+  <div id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">👤 Profil Siswa</h2>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <h1>Daftar Siswa</h1>
+        <p>Klik kartu siswa untuk melihat profil lengkap, achievement, dan XP</p>
+      </div>
+
+      <div class="search-bar-wrap">
+        <input type="text" class="search-bar-input" id="search-siswa"
+               placeholder="🔍  Cari nama siswa…" />
+      </div>
+
+      <div id="siswa-grid" class="siswa-grid">
+        <div class="loading-state" style="grid-column:1/-1">
+          <div class="spinner"></div><p>Memuat siswa…</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth(['admin','pengurus_kas','pengurus_absensi','pengunjung']);
+if (!user) throw new Error('No access');
+
+const BADGE_ICONS = {
+  perfect_attendance: '🏆', super_rajin: '⭐', no_alpha: '🚫',
+  raja_izin: '📝', pembayar_setia: '💳', sultan_kas: '💎',
+  bintang_kelas: '🌟', konsisten: '🎯',
+};
+
+let allSiswa = [];
+
+async function loadSiswa() {
+  const [{ data: students }, { data: xpData }, { data: achData }] = await Promise.all([
+    supabaseClient.from('students').select('*').order('nama'),
+    supabaseClient.from('student_xp').select('*'),
+    supabaseClient.from('student_achievements').select('student_id,badge_key'),
+  ]);
+
+  const xpMap  = Object.fromEntries((xpData || []).map(x => [x.student_id, x]));
+  const achMap = {};
+  (achData || []).forEach(a => {
+    if (!achMap[a.student_id]) achMap[a.student_id] = [];
+    achMap[a.student_id].push(a.badge_key);
+  });
+
+  allSiswa = (students || []).map(s => ({
+    ...s,
+    xp: xpMap[s.id] || { total_xp: 0, level: 1 },
+    badges: achMap[s.id] || [],
+  }));
+
+  renderGrid(allSiswa);
+}
+
+function renderGrid(list) {
+  const grid = document.getElementById('siswa-grid');
+  if (!list.length) {
+    App.showEmpty('siswa-grid', 'Tidak ada siswa ditemukan.');
+    return;
+  }
+  grid.innerHTML = list.map(s => {
+    const xpInLevel = s.xp.total_xp % 50;
+    const pct = Math.round(xpInLevel * 2);
+    const topBadges = s.badges.slice(0, 4);
+    return `
+      <a class="siswa-card" href="profil-siswa.html?id=${s.id}">
+        <div class="siswa-avatar-lg">${(s.nama||'?')[0].toUpperCase()}</div>
+        <div class="siswa-card-name">${s.nama}</div>
+        <div class="siswa-card-nis">${s.nis ? 'NIS: '+s.nis : s.kelas || ''}</div>
+        <div class="siswa-card-level">Level ${s.xp.level} · ${s.xp.total_xp} XP</div>
+        <div class="siswa-xp-bar">
+          <div class="siswa-xp-fill" style="width:${pct}%"></div>
+        </div>
+        ${topBadges.length ? `
+          <div class="siswa-badges-row">
+            ${topBadges.map(b => `<span class="mini-badge" title="${b}">${BADGE_ICONS[b]||'🎖️'}</span>`).join('')}
+            ${s.badges.length > 4 ? `<span style="font-size:.7rem;color:var(--text-muted)">+${s.badges.length-4}</span>` : ''}
+          </div>` : ''}
+      </a>`;
+  }).join('');
+}
+
+document.getElementById('search-siswa').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  renderGrid(allSiswa.filter(s => s.nama.toLowerCase().includes(q)));
+});
+
+loadSiswa();
+</script>
+</body>
+</html>

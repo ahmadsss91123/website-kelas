@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profil Siswa – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── PROFILE HERO ── */
+    .profile-hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      border-radius: 20px;
+      padding: 32px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-hero::after {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.03);
+      right: -80px; top: -100px;
+      pointer-events: none;
+    }
+    .profile-hero-avatar {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      font-size: 2.8rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      border: 4px solid rgba(255,255,255,.3);
+      position: relative;
+    }
+    .profile-online-dot {
+      position: absolute;
+      bottom: 4px; right: 4px;
+      width: 18px; height: 18px;
+      background: #22c55e;
+      border-radius: 50%;
+      border: 3px solid #1a1a2e;
+    }
+    .profile-hero-info { flex: 1; }
+    .profile-hero-name { font-size: 1.6rem; font-weight: 800; margin: 0 0 4px; }
+    .profile-hero-sub  { opacity: .65; font-size: .9rem; margin: 0 0 12px; }
+    .profile-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .profile-hero-badge {
+      font-size: .7rem; padding: 4px 10px;
+      border-radius: 20px; font-weight: 600;
+    }
+    .level-badge { background: #f5c842; color: #7a5a00; }
+    .xp-badge    { background: rgba(255,255,255,.15); color: #fff; }
+    .rank-badge  { background: rgba(99,102,241,.4); color: #c7d2fe; }
+
+    /* XP BAR BIG */
+    .xp-section {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .xp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .xp-title  { font-weight: 700; font-size: .95rem; color: var(--text-primary); }
+    .xp-nums   { font-size: .8rem; color: var(--text-muted); }
+    .xp-bar-big { background: var(--border); border-radius: 20px; height: 10px; overflow: hidden; }
+    .xp-bar-big-fill {
+      background: linear-gradient(90deg, #667eea, #a855f7);
+      height: 100%; border-radius: 20px;
+      transition: width .8s cubic-bezier(.34,1.56,.64,1);
+    }
+    .xp-levels { display: flex; justify-content: space-between; margin-top: 8px; font-size: .72rem; color: var(--text-muted); }
+
+    /* STATS 2×2 */
+    .profile-stats { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 20px; }
+    @media(min-width:640px) { .profile-stats { grid-template-columns: repeat(4,1fr); } }
+    .profile-stat-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .profile-stat-icon { font-size: 1.5rem; margin-bottom: 6px; }
+    .profile-stat-val  { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); }
+    .profile-stat-lbl  { font-size: .72rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ACHIEVEMENTS */
+    .ach-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
+    .ach-item {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+      position: relative;
+    }
+    .ach-item.earned { border-color: var(--primary); }
+    .ach-item.locked { opacity: .45; }
+    .ach-item-icon { font-size: 1.8rem; margin-bottom: 6px; }
+    .ach-item-name { font-size: .78rem; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+    .ach-item-desc { font-size: .65rem; color: var(--text-muted); }
+    .ach-check {
+      position: absolute; top: 6px; right: 8px;
+      font-size: .65rem; color: var(--primary); font-weight: 700;
+    }
+
+    /* ANON CHAT */
+    .chat-section { margin-top: 24px; }
+    .chat-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .anon-label {
+      font-size: .75rem; padding: 4px 10px;
+      background: rgba(99,102,241,.1);
+      color: var(--primary);
+      border-radius: 20px; font-weight: 600;
+    }
+    .chat-composer {
+      display: flex; gap: 10px;
+      margin-bottom: 20px;
+      align-items: flex-end;
+    }
+    .chat-textarea {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: .88rem;
+      resize: none;
+      min-height: 56px;
+      max-height: 120px;
+      transition: border-color .2s;
+      font-family: inherit;
+    }
+    .chat-textarea:focus { outline: none; border-color: var(--primary); }
+    .chat-send-btn {
+      padding: 12px 20px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: .9rem;
+      border: none;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    .chat-send-btn:hover:not(:disabled) { opacity: .85; transform: translateY(-1px); }
+    .chat-send-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .chat-char-count { font-size: .72rem; color: var(--text-muted); margin-bottom: 16px; }
+    .chat-hint { font-size: .75rem; color: var(--text-muted); margin-bottom: 16px;
+      background: var(--bg-secondary); padding: 10px 14px; border-radius: 8px;
+      border-left: 3px solid var(--primary); }
+
+    .messages-list { display: flex; flex-direction: column; gap: 12px; }
+    .msg-bubble {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 14px 14px 14px 4px;
+      padding: 14px 16px;
+      max-width: 600px;
+      position: relative;
+      animation: msg-in .3s ease;
+    }
+    @keyframes msg-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    .msg-anon-label {
+      font-size: .72rem; color: var(--text-muted);
+      font-weight: 600; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .msg-anon-label::before {
+      content: '👤';
+    }
+    .msg-text { font-size: .88rem; color: var(--text-primary); line-height: 1.55; }
+    .msg-time { font-size: .68rem; color: var(--text-muted); margin-top: 6px; }
+    .msg-own  { border-radius: 14px 14px 4px 14px; align-self: flex-end; background: rgba(99,102,241,.08); border-color: rgba(99,102,241,.25); }
+    .msg-own .msg-anon-label { color: var(--primary); }
+
+    .load-more-btn {
+      width: 100%; margin-top: 12px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px dashed var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: .82rem;
+      transition: border-color .2s, color .2s;
+    }
+    .load-more-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    @media(max-width:600px) {
+      .profile-hero { flex-direction: column; text-align: center; }
+      .profile-hero-badges { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🎓</div>
+        <div>
+          <div class="brand-name">ManajemenKelas</div>
+          <div class="brand-sub">Sistem Informasi</div>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info">
+          <div id="sidebar-name">Loading…</div>
+          <div id="sidebar-role"></div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-link" href="index.html" data-page="index.html" data-role-access="admin">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a class="nav-link" href="kas.html" data-page="kas.html" data-role-access="admin,pengurus_kas">
+        <span class="nav-icon">💰</span> Kas Kelas
+      </a>
+      <a class="nav-link" href="absensi.html" data-page="absensi.html" data-role-access="admin,pengurus_absensi">
+        <span class="nav-icon">📋</span> Absensi
+      </a>
+      <a class="nav-link" href="laporan.html" data-page="laporan.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">📈</span> Laporan
+      </a>
+      <a class="nav-link" href="leaderboard.html" data-page="leaderboard.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">🏆</span> Leaderboard
+      </a>
+      <a class="nav-link" href="siswa.html" data-page="siswa.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">👤</span> Profil Siswa
+      </a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-link" href="index.html" data-role-access="admin">
+        <span class="nav-icon">👥</span> Kelola Akun
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logout-btn">🚪 Logout</button>
+    </div>
+  </aside>
+  <div id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title" id="navbar-title">Profil Siswa</h2>
+    </header>
+
+    <main class="page-content">
+      <div style="margin-bottom:12px;">
+        <a href="siswa.html" style="font-size:.85rem;color:var(--text-muted);text-decoration:none;">
+          ← Kembali ke Daftar Siswa
+        </a>
+      </div>
+
+      <!-- HERO PROFILE -->
+      <div class="profile-hero" id="profile-hero">
+        <div class="loading-state" style="color:#fff;opacity:.7"><div class="spinner"></div><p>Memuat profil…</p></div>
+      </div>
+
+      <!-- XP BAR -->
+      <div class="xp-section" id="xp-section" style="display:none">
+        <div class="xp-header">
+          <div class="xp-title">⚡ Progress XP</div>
+          <div class="xp-nums" id="xp-nums">0 / 50 XP ke level berikutnya</div>
+        </div>
+        <div class="xp-bar-big">
+          <div class="xp-bar-big-fill" id="xp-bar-fill" style="width:0%"></div>
+        </div>
+        <div class="xp-levels">
+          <span id="xp-level-cur">Level 1</span>
+          <span id="xp-level-next">Level 2</span>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="profile-stats" id="profile-stats" style="display:none">
+        <div class="profile-stat-card">
+          <div class="profile-stat-icon">✅</div>
+          <div class="profile-stat-val" id="ps-hadir">–</div>
+          <div class="profile-stat-lbl">Hari Hadir</div>
+        </div>
+        <div class="profile-stat-card">
+          <div class="profile-stat-icon">❌</div>
+          <div class="profile-stat-val" id="ps-alpha">–</div>
+          <div class="profile-stat-lbl">Hari Alpha</div>
+        </div>
+        <div class="profile-stat-card">
+          <div class="profile-stat-icon">💰</div>
+          <div class="profile-stat-val" id="ps-kas">–</div>
+          <div class="profile-stat-lbl">Pembayaran Kas</div>
+        </div>
+        <div class="profile-stat-card">
+          <div class="profile-stat-icon">🏅</div>
+          <div class="profile-stat-val" id="ps-rank">–</div>
+          <div class="profile-stat-lbl">Ranking XP</div>
+        </div>
+      </div>
+
+      <!-- ACHIEVEMENTS -->
+      <div class="card" id="ach-card" style="display:none">
+        <div class="card-header">
+          <h3 class="card-title">🎖️ Achievement</h3>
+          <span id="ach-count-label" style="font-size:.8rem;color:var(--text-muted)"></span>
+        </div>
+        <div class="ach-grid" id="ach-grid"></div>
+      </div>
+
+      <!-- ANONYMOUS CHAT -->
+      <div class="card chat-section" id="chat-card" style="display:none">
+        <div class="chat-header-row">
+          <h3 class="card-title">💬 Pesan Anonim</h3>
+          <span class="anon-label">100% Anonim</span>
+        </div>
+
+        <div class="chat-hint">
+          🎭 Kirim pesan ke <strong id="chat-target-name">siswa ini</strong> tanpa nama.
+          Identitasmu tidak akan pernah terungkap. Gunakan dengan bijak.
+        </div>
+
+        <div class="chat-composer">
+          <textarea class="chat-textarea" id="chat-input"
+            placeholder="Tulis pesan anonim… (maks. 500 karakter)"
+            rows="2" maxlength="500"></textarea>
+          <button class="chat-send-btn" id="chat-send-btn">Kirim</button>
+        </div>
+        <div class="chat-char-count"><span id="char-count">0</span>/500 karakter</div>
+
+        <div class="messages-list" id="messages-list">
+          <div class="loading-state"><div class="spinner"></div><p>Memuat pesan…</p></div>
+        </div>
+        <button class="load-more-btn" id="load-more-btn" style="display:none">
+          Muat pesan lama…
+        </button>
+      </div>
+
+      <!-- ADMIN: HAPUS PESAN (hanya admin) -->
+      <div id="admin-msg-panel" style="display:none;margin-top:12px;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🛡️ Moderasi Pesan (Admin)</h3>
+          </div>
+          <p style="font-size:.82rem;color:var(--text-muted);margin:0 0 12px;">
+            Klik 🗑️ di setiap pesan untuk menyembunyikannya dari publik.
+          </p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth(['admin','pengurus_kas','pengurus_absensi','pengunjung']);
+if (!user) throw new Error('No access');
+const isAdmin = user?.profile?.role === 'admin';
+
+// Baca student ID dari URL
+const params     = new URLSearchParams(window.location.search);
+const studentId  = params.get('id');
+if (!studentId) { window.location.href = 'siswa.html'; }
+
+// Sender token untuk rate-limit anonim
+let senderToken = null;
+try {
+  const stored = localStorage.getItem('anon_sender_token');
+  senderToken = stored || null;
+} catch(e) {}
+if (!senderToken) {
+  senderToken = crypto.randomUUID();
+  try { localStorage.setItem('anon_sender_token', senderToken); } catch(e) {}
+}
+
+// ── DEFINISI BADGE ───────────────────────────────────────────
+const ALL_BADGES = [
+  { key:'perfect_attendance', icon:'🏆', name:'Perfect Attendance', desc:'20+ hadir, 0 alpha' },
+  { key:'super_rajin',        icon:'⭐', name:'Paling Rajin',        desc:'30+ hari hadir' },
+  { key:'no_alpha',           icon:'🚫', name:'Anti Alpha',          desc:'10+ absensi, tidak pernah alpha' },
+  { key:'raja_izin',          icon:'📝', name:'Raja Izin',           desc:'10+ kali izin' },
+  { key:'pembayar_setia',     icon:'💳', name:'Pembayar Setia',      desc:'5+ kali bayar kas' },
+  { key:'sultan_kas',         icon:'💎', name:'Sultan Kas',          desc:'Total bayar ≥ Rp 500.000' },
+  { key:'bintang_kelas',      icon:'🌟', name:'Bintang Kelas',       desc:'25+ hadir & 3+ kas' },
+  { key:'konsisten',          icon:'🎯', name:'Konsisten',           desc:'15+ absensi, alpha ≤ 2' },
+];
+
+// ── LOAD SEMUA DATA ───────────────────────────────────────────
+async function loadProfile() {
+  const [
+    { data: student },
+    { data: xp },
+    { data: achievements },
+    { data: absData },
+    { data: kasData },
+    { data: lbData },
+  ] = await Promise.all([
+    supabaseClient.from('students').select('*').eq('id', studentId).single(),
+    supabaseClient.from('student_xp').select('*').eq('student_id', studentId).single(),
+    supabaseClient.from('student_achievements').select('badge_key').eq('student_id', studentId),
+    supabaseClient.from('attendances').select('status').eq('student_id', studentId),
+    supabaseClient.from('cash_payments').select('nominal').eq('student_id', studentId),
+    supabaseClient.from('leaderboard_view').select('rank_xp').eq('id', studentId).single(),
+  ]);
+
+  if (!student) { window.location.href = 'siswa.html'; return; }
+
+  const xpData      = xp || { total_xp: 0, level: 1 };
+  const earnedBadges = new Set((achievements || []).map(a => a.badge_key));
+  const hadir  = (absData || []).filter(a => a.status === 'Hadir').length;
+  const alpha  = (absData || []).filter(a => a.status === 'Alpha').length;
+  const kasCount = (kasData || []).length;
+  const rankXp = lbData?.rank_xp || '–';
+
+  // Update page title
+  document.title = `${student.nama} – Manajemen Kelas`;
+  document.getElementById('navbar-title').textContent = student.nama;
+
+  // ── HERO ──────────────────────────────────────────────────
+  document.getElementById('profile-hero').innerHTML = `
+    <div class="profile-hero-avatar">
+      ${student.nama[0].toUpperCase()}
+      <div class="profile-online-dot"></div>
+    </div>
+    <div class="profile-hero-info">
+      <div class="profile-hero-name">${student.nama}</div>
+      <div class="profile-hero-sub">
+        ${student.nis ? 'NIS: '+student.nis+' · ' : ''}
+        ${student.kelas || 'Kelas tidak diset'}
+        ${student.bio ? '<br><em style="opacity:.7">'+student.bio+'</em>' : ''}
+      </div>
+      <div class="profile-hero-badges">
+        <span class="profile-hero-badge level-badge">⚡ Level ${xpData.level}</span>
+        <span class="profile-hero-badge xp-badge">${xpData.total_xp} XP</span>
+        <span class="profile-hero-badge rank-badge">🏅 Rank #${rankXp}</span>
+        ${earnedBadges.size ? `<span class="profile-hero-badge" style="background:rgba(255,215,0,.2);color:#ffd700">🎖️ ${earnedBadges.size} Badge</span>` : ''}
+      </div>
+    </div>`;
+
+  // ── XP BAR ────────────────────────────────────────────────
+  const xpInLevel = xpData.total_xp % 50;
+  const pct       = Math.min(100, Math.round(xpInLevel * 2));
+  document.getElementById('xp-section').style.display = 'block';
+  document.getElementById('xp-nums').textContent = `${xpInLevel} / 50 XP ke level berikutnya`;
+  document.getElementById('xp-level-cur').textContent = `Level ${xpData.level}`;
+  document.getElementById('xp-level-next').textContent = `Level ${xpData.level + 1}`;
+  setTimeout(() => {
+    document.getElementById('xp-bar-fill').style.width = pct + '%';
+  }, 200);
+
+  // ── STATS ─────────────────────────────────────────────────
+  document.getElementById('profile-stats').style.display = 'grid';
+  document.getElementById('ps-hadir').textContent = hadir;
+  document.getElementById('ps-alpha').textContent = alpha;
+  document.getElementById('ps-kas').textContent   = kasCount + '×';
+  document.getElementById('ps-rank').textContent  = '#' + rankXp;
+
+  // ── ACHIEVEMENTS ──────────────────────────────────────────
+  document.getElementById('ach-card').style.display = 'block';
+  document.getElementById('ach-count-label').textContent =
+    `${earnedBadges.size} / ${ALL_BADGES.length} diraih`;
+
+  document.getElementById('ach-grid').innerHTML = ALL_BADGES.map(b => {
+    const earned = earnedBadges.has(b.key);
+    return `
+      <div class="ach-item ${earned ? 'earned' : 'locked'}">
+        ${earned ? '<div class="ach-check">✓ Diraih</div>' : ''}
+        <div class="ach-item-icon">${b.icon}</div>
+        <div class="ach-item-name">${b.name}</div>
+        <div class="ach-item-desc">${b.desc}</div>
+      </div>`;
+  }).join('');
+
+  // ── CHAT ──────────────────────────────────────────────────
+  document.getElementById('chat-card').style.display = 'block';
+  document.getElementById('chat-target-name').textContent = student.nama;
+  if (isAdmin) document.getElementById('admin-msg-panel').style.display = 'block';
+
+  await loadMessages();
+}
+
+// ── PESAN ANONIM ─────────────────────────────────────────────
+let msgPage = 0;
+const PAGE_SIZE = 15;
+
+async function loadMessages(append = false) {
+  if (!append) msgPage = 0;
+
+  const { data: msgs, error } = await supabaseClient
+    .from('anonymous_messages')
+    .select('*')
+    .eq('student_id', studentId)
+    .eq('is_hidden', false)
+    .order('created_at', { ascending: false })
+    .range(msgPage * PAGE_SIZE, (msgPage + 1) * PAGE_SIZE - 1);
+
+  const list = document.getElementById('messages-list');
+
+  if (!append) {
+    if (!msgs?.length) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">💌</div>
+          <p>Belum ada pesan. Jadilah yang pertama mengirim!</p>
+        </div>`;
+      document.getElementById('load-more-btn').style.display = 'none';
+      return;
+    }
+    list.innerHTML = '';
+  }
+
+  (msgs || []).forEach(m => {
+    const isOwn = m.sender_token === senderToken;
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble' + (isOwn ? ' msg-own' : '');
+    bubble.dataset.msgId = m.id;
+    bubble.innerHTML = `
+      <div class="msg-anon-label">
+        ${isOwn ? 'Pesanmu · Anonim' : 'Anonim'}
+        ${isAdmin ? `<button onclick="hideMsg('${m.id}')" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:.8rem;color:var(--danger)">🗑️ Sembunyikan</button>` : ''}
+      </div>
+      <div class="msg-text">${escapeHtml(m.message)}</div>
+      <div class="msg-time">${formatRelTime(m.created_at)}</div>`;
+    list.appendChild(bubble);
+  });
+
+  const showLoadMore = msgs?.length === PAGE_SIZE;
+  document.getElementById('load-more-btn').style.display = showLoadMore ? 'block' : 'none';
+}
+
+// ── KIRIM PESAN ──────────────────────────────────────────────
+const chatInput  = document.getElementById('chat-input');
+const charCount  = document.getElementById('char-count');
+const sendBtn    = document.getElementById('chat-send-btn');
+
+chatInput.addEventListener('input', () => {
+  charCount.textContent = chatInput.value.length;
+});
+
+// Rate-limit: simpan timestamp terakhir kirim
+let lastSent = 0;
+
+sendBtn.addEventListener('click', async () => {
+  const msg = chatInput.value.trim();
+  if (!msg) return;
+
+  const now = Date.now();
+  if (now - lastSent < 10000) {
+    App.showToast('Tunggu 10 detik sebelum kirim pesan lagi.', 'error');
+    return;
+  }
+
+  sendBtn.disabled = true;
+  sendBtn.textContent = '…';
+
+  const { error } = await supabaseClient
+    .from('anonymous_messages')
+    .insert({
+      student_id:   studentId,
+      message:      msg,
+      sender_token: senderToken,
+    });
+
+  sendBtn.disabled = false;
+  sendBtn.textContent = 'Kirim';
+
+  if (error) {
+    App.showToast('Gagal mengirim pesan: ' + error.message, 'error');
+    return;
+  }
+
+  lastSent = Date.now();
+  chatInput.value  = '';
+  charCount.textContent = '0';
+  App.showToast('Pesan terkirim! 🎉', 'success');
+  await loadMessages(false);
+});
+
+document.getElementById('load-more-btn').addEventListener('click', async () => {
+  msgPage++;
+  await loadMessages(true);
+});
+
+// Admin: sembunyikan pesan
+window.hideMsg = async (msgId) => {
+  const ok = await App.confirmDelete('Sembunyikan pesan ini dari publik?');
+  if (!ok) return;
+  const { error } = await supabaseClient
+    .from('anonymous_messages')
+    .update({ is_hidden: true })
+    .eq('id', msgId);
+  if (error) { App.showToast('Gagal.', 'error'); return; }
+  document.querySelector(`[data-msg-id="${msgId}"]`)?.remove();
+  App.showToast('Pesan disembunyikan.', 'success');
+};
+
+// ── UTILS ────────────────────────────────────────────────────
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/\n/g, '<br>');
+}
+
+function formatRelTime(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (diff < 60)   return 'Baru saja';
+  if (diff < 3600) return Math.floor(diff/60) + ' menit lalu';
+  if (diff < 86400)return Math.floor(diff/3600) + ' jam lalu';
+  return new Date(dateStr).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+loadProfile();
+</script>
+</body>
+</html>

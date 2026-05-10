@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaderboard – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── LEADERBOARD SPECIFIC STYLES ── */
+    :root {
+      --gold:   #f5c842;
+      --silver: #b0bec5;
+      --bronze: #cd7f32;
+    }
+
+    .lb-hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .lb-hero::before {
+      content: '🏆';
+      position: absolute;
+      right: 24px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 80px;
+      opacity: .15;
+    }
+    .lb-hero h1 { font-size: 1.8rem; margin: 0 0 4px; font-weight: 800; }
+    .lb-hero p  { margin: 0; opacity: .7; font-size: .9rem; }
+
+    /* PODIUM TOP 3 */
+    .podium-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+      align-items: flex-end;
+    }
+    .podium-card {
+      border-radius: 16px;
+      padding: 20px 12px;
+      text-align: center;
+      position: relative;
+      transition: transform .2s;
+    }
+    .podium-card:hover { transform: translateY(-4px); }
+    .podium-card.rank-1 {
+      background: linear-gradient(160deg, #fff8e1, #fff3cd);
+      border: 2px solid var(--gold);
+      order: 2;
+    }
+    .podium-card.rank-2 {
+      background: linear-gradient(160deg, #f5f5f5, #eceff1);
+      border: 2px solid var(--silver);
+      order: 1;
+    }
+    .podium-card.rank-3 {
+      background: linear-gradient(160deg, #fff3e0, #fbe9e7);
+      border: 2px solid var(--bronze);
+      order: 3;
+    }
+    .podium-crown { font-size: 2rem; margin-bottom: 8px; }
+    .podium-avatar {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      font-size: 1.5rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px;
+      border: 3px solid currentColor;
+    }
+    .rank-1 .podium-avatar { border-color: var(--gold); }
+    .rank-2 .podium-avatar { border-color: var(--silver); }
+    .rank-3 .podium-avatar { border-color: var(--bronze); }
+    .podium-name { font-weight: 700; font-size: .95rem; margin-bottom: 4px; color: var(--text-primary); }
+    .podium-xp   { font-size: .8rem; color: var(--text-secondary); margin-bottom: 8px; }
+    .podium-rank-badge {
+      display: inline-block;
+      font-size: .7rem; font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 20px;
+    }
+    .rank-1 .podium-rank-badge { background: var(--gold); color: #7a5a00; }
+    .rank-2 .podium-rank-badge { background: var(--silver); color: #455a64; }
+    .rank-3 .podium-rank-badge { background: var(--bronze); color: #fff; }
+    .podium-link { cursor: pointer; text-decoration: none; }
+
+    /* TABS LEADERBOARD */
+    .lb-tabs {
+      display: flex; gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .lb-tab {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 2px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-size: .85rem; font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .lb-tab.active, .lb-tab:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* LEADERBOARD TABLE */
+    .lb-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+    .lb-table thead th {
+      font-size: .75rem; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-muted); font-weight: 600;
+      padding: 4px 12px; text-align: left;
+    }
+    .lb-row {
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      transition: transform .15s, box-shadow .15s;
+      cursor: pointer;
+    }
+    .lb-row:hover { transform: translateX(4px); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    .lb-row td { padding: 12px; }
+    .lb-row td:first-child { border-radius: 10px 0 0 10px; }
+    .lb-row td:last-child  { border-radius: 0 10px 10px 0; }
+    .lb-rank-num {
+      font-size: 1rem; font-weight: 800;
+      width: 32px; text-align: center;
+      color: var(--text-muted);
+    }
+    .lb-rank-num.top1 { color: var(--gold); }
+    .lb-rank-num.top2 { color: var(--silver); }
+    .lb-rank-num.top3 { color: var(--bronze); }
+    .lb-student-info { display: flex; align-items: center; gap: 10px; }
+    .lb-mini-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      font-weight: 700; font-size: .9rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .lb-student-name { font-weight: 600; font-size: .9rem; color: var(--text-primary); }
+    .lb-student-level { font-size: .75rem; color: var(--text-muted); }
+    .lb-score { font-weight: 700; font-size: 1rem; color: var(--primary); }
+    .lb-score-label { font-size: .7rem; color: var(--text-muted); }
+    .lb-move { font-size: .75rem; }
+    .lb-move.up   { color: #22c55e; }
+    .lb-move.same { color: var(--text-muted); }
+
+    /* BADGE GRID */
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .achievement-card {
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      border: 2px solid var(--border);
+      background: var(--bg-secondary);
+      transition: transform .2s, border-color .2s;
+    }
+    .achievement-card.earned {
+      border-color: var(--primary);
+      background: linear-gradient(135deg, rgba(99,102,241,.05), rgba(99,102,241,.02));
+    }
+    .achievement-card:hover { transform: translateY(-3px); }
+    .achievement-card .ach-icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .achievement-card.locked .ach-icon { filter: grayscale(1); opacity: .4; }
+    .achievement-card .ach-name {
+      font-weight: 700; font-size: .85rem;
+      color: var(--text-primary); margin-bottom: 4px;
+    }
+    .achievement-card.locked .ach-name { color: var(--text-muted); }
+    .achievement-card .ach-desc { font-size: .75rem; color: var(--text-muted); }
+    .ach-earned-badge {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: .65rem; padding: 2px 8px;
+      background: var(--primary); color: #fff;
+      border-radius: 10px; font-weight: 600;
+    }
+    .locked-badge {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: .65rem; padding: 2px 8px;
+      background: var(--border); color: var(--text-muted);
+      border-radius: 10px; font-weight: 600;
+    }
+
+    /* XP PROGRESS BAR */
+    .xp-bar-wrap { background: var(--border); border-radius: 20px; overflow: hidden; height: 6px; }
+    .xp-bar-fill { background: linear-gradient(90deg, var(--primary), #a855f7); height: 100%; border-radius: 20px; transition: width .6s ease; }
+
+    @media (max-width: 640px) {
+      .podium-wrap { grid-template-columns: 1fr; }
+      .podium-card.rank-1 { order: 1; }
+      .podium-card.rank-2 { order: 2; }
+      .podium-card.rank-3 { order: 3; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🎓</div>
+        <div>
+          <div class="brand-name">ManajemenKelas</div>
+          <div class="brand-sub">Sistem Informasi</div>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info">
+          <div id="sidebar-name">Loading…</div>
+          <div id="sidebar-role"></div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-link" href="index.html" data-page="index.html" data-role-access="admin">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a class="nav-link" href="kas.html" data-page="kas.html" data-role-access="admin,pengurus_kas">
+        <span class="nav-icon">💰</span> Kas Kelas
+      </a>
+      <a class="nav-link" href="absensi.html" data-page="absensi.html" data-role-access="admin,pengurus_absensi">
+        <span class="nav-icon">📋</span> Absensi
+      </a>
+      <a class="nav-link" href="laporan.html" data-page="laporan.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">📈</span> Laporan
+      </a>
+      <a class="nav-link active" href="leaderboard.html" data-page="leaderboard.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">🏆</span> Leaderboard
+      </a>
+      <a class="nav-link" href="siswa.html" data-page="siswa.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">👤</span> Profil Siswa
+      </a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-link" href="index.html" data-role-access="admin">
+        <span class="nav-icon">👥</span> Kelola Akun
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logout-btn">🚪 Logout</button>
+    </div>
+  </aside>
+  <div id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">🏆 Leaderboard</h2>
+    </header>
+
+    <main class="page-content">
+      <!-- HERO -->
+      <div class="lb-hero">
+        <h1>🏆 Hall of Fame</h1>
+        <p>Ranking kehadiran, kas, dan XP seluruh siswa kelas</p>
+      </div>
+
+      <!-- PODIUM TOP 3 -->
+      <div id="podium-wrap" class="podium-wrap">
+        <div class="loading-state" style="grid-column:1/-1">
+          <div class="spinner"></div><p>Memuat ranking…</p>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="lb-tabs">
+        <button class="lb-tab active" data-lb="xp">⚡ XP Total</button>
+        <button class="lb-tab" data-lb="hadir">✅ Paling Rajin</button>
+        <button class="lb-tab" data-lb="kas">💰 Aktif Bayar Kas</button>
+      </div>
+
+      <!-- TABLE -->
+      <div class="card" style="padding:16px;">
+        <div id="lb-table-wrap">
+          <div class="loading-state"><div class="spinner"></div><p>Memuat…</p></div>
+        </div>
+      </div>
+
+      <!-- ACHIEVEMENT HALL -->
+      <div class="card" style="margin-top:24px;">
+        <div class="card-header">
+          <h3 class="card-title">🎖️ Achievement Hall</h3>
+          <span style="font-size:.8rem;color:var(--text-muted)">Semua badge yang tersedia</span>
+        </div>
+        <div class="badge-grid" id="achievement-hall"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth(['admin','pengurus_kas','pengurus_absensi','pengunjung']);
+if (!user) throw new Error('No access');
+
+// ── DEFINISI SEMUA ACHIEVEMENT ──────────────────────────────
+const ALL_BADGES = [
+  { key:'perfect_attendance', icon:'🏆', name:'Perfect Attendance', desc:'20+ hadir, 0 alpha' },
+  { key:'super_rajin',        icon:'⭐', name:'Paling Rajin',        desc:'30+ hari hadir' },
+  { key:'no_alpha',           icon:'🚫', name:'Anti Alpha',          desc:'10+ absensi, tidak pernah alpha' },
+  { key:'raja_izin',          icon:'📝', name:'Raja Izin',           desc:'10+ kali izin' },
+  { key:'pembayar_setia',     icon:'💳', name:'Pembayar Setia',      desc:'5+ kali bayar kas' },
+  { key:'sultan_kas',         icon:'💎', name:'Sultan Kas',          desc:'Total bayar ≥ Rp 500.000' },
+  { key:'bintang_kelas',      icon:'🌟', name:'Bintang Kelas',       desc:'25+ hadir & 3+ kas' },
+  { key:'konsisten',          icon:'🎯', name:'Konsisten',           desc:'15+ absensi, alpha ≤ 2' },
+];
+
+// ── LOAD LEADERBOARD DATA ────────────────────────────────────
+let lbData = [];
+async function loadLeaderboard() {
+  const { data, error } = await supabaseClient
+    .from('leaderboard_view')
+    .select('*')
+    .order('total_xp', { ascending: false });
+
+  if (error || !data?.length) {
+    document.getElementById('podium-wrap').innerHTML =
+      '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📭</div><p>Belum ada data siswa.</p></div>';
+    return;
+  }
+
+  lbData = data;
+  renderPodium(data);
+  renderTable('xp', data);
+  renderAchievementHall(data);
+}
+
+// ── PODIUM TOP 3 ─────────────────────────────────────────────
+function renderPodium(data) {
+  const top3 = data.slice(0, 3);
+  const rankEmoji = ['🥇','🥈','🥉'];
+  const podiumWrap = document.getElementById('podium-wrap');
+
+  podiumWrap.innerHTML = top3.map((s, i) => `
+    <a class="podium-card rank-${i+1} podium-link" href="profil-siswa.html?id=${s.id}">
+      <div class="podium-crown">${rankEmoji[i]}</div>
+      <div class="podium-avatar">${(s.nama||'?')[0].toUpperCase()}</div>
+      <div class="podium-name">${s.nama}</div>
+      <div class="podium-xp">Level ${s.level} · ${s.total_xp} XP</div>
+      <div class="xp-bar-wrap" style="margin-bottom:8px;">
+        <div class="xp-bar-fill" style="width:${Math.min(100,(s.total_xp % 50)*2)}%"></div>
+      </div>
+      <span class="podium-rank-badge">Rank #${i+1}</span>
+    </a>
+  `).join('');
+}
+
+// ── TABLE RENDER ─────────────────────────────────────────────
+function renderTable(mode, data) {
+  const sorted = [...data].sort((a, b) => {
+    if (mode === 'xp')    return b.total_xp - a.total_xp;
+    if (mode === 'hadir') return b.total_hadir - a.total_hadir;
+    if (mode === 'kas')   return b.kas_count - a.kas_count;
+    return 0;
+  });
+
+  const scoreMap = {
+    xp:    s => `${s.total_xp} XP`,
+    hadir: s => `${s.total_hadir} hari`,
+    kas:   s => `${s.kas_count}× · ${App.formatCurrency(s.total_kas)}`,
+  };
+  const labelMap = { xp: 'Total XP', hadir: 'Hari Hadir', kas: 'Pembayaran Kas' };
+
+  const wrap = document.getElementById('lb-table-wrap');
+  if (!sorted.length) { App.showEmpty('lb-table-wrap', 'Belum ada data.'); return; }
+
+  wrap.innerHTML = `
+    <table class="lb-table">
+      <thead><tr>
+        <th style="width:44px">#</th>
+        <th>Siswa</th>
+        <th>${labelMap[mode]}</th>
+        <th style="width:80px">Level</th>
+      </tr></thead>
+      <tbody>
+        ${sorted.map((s, i) => {
+          const rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+          const rankIcon  = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}`;
+          return `
+          <tr class="lb-row" onclick="window.location.href='profil-siswa.html?id=${s.id}'">
+            <td><div class="lb-rank-num ${rankClass}">${rankIcon}</div></td>
+            <td>
+              <div class="lb-student-info">
+                <div class="lb-mini-avatar">${(s.nama||'?')[0].toUpperCase()}</div>
+                <div>
+                  <div class="lb-student-name">${s.nama}</div>
+                  <div class="lb-student-level">${s.kelas || ''}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="lb-score">${scoreMap[mode](s)}</div>
+            </td>
+            <td>
+              <span class="badge badge-admin" style="font-size:.75rem">Lv.${s.level}</span>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ── ACHIEVEMENT HALL ─────────────────────────────────────────
+async function renderAchievementHall(data) {
+  // Hitung berapa siswa punya tiap badge
+  const { data: achData } = await supabaseClient
+    .from('student_achievements').select('badge_key');
+  const badgeCount = {};
+  (achData || []).forEach(a => {
+    badgeCount[a.badge_key] = (badgeCount[a.badge_key] || 0) + 1;
+  });
+
+  document.getElementById('achievement-hall').innerHTML = ALL_BADGES.map(b => `
+    <div class="achievement-card ${badgeCount[b.key] ? 'earned' : 'locked'}">
+      <div class="ach-icon">${b.icon}</div>
+      <div class="ach-name">${b.name}</div>
+      <div class="ach-desc">${b.desc}</div>
+      ${badgeCount[b.key]
+        ? `<span class="ach-earned-badge">✓ ${badgeCount[b.key]} siswa</span>`
+        : `<span class="locked-badge">🔒 Belum ada</span>`
+      }
+    </div>`).join('');
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────
+document.querySelectorAll('.lb-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable(btn.dataset.lb, lbData);
+  });
+});
+
+loadLeaderboard();
+</script>
+</body>
+</html>

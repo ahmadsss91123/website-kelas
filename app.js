@@ -14,10 +14,10 @@ const ROLES = {
 
 // Halaman yang diizinkan per role
 const PAGE_ACCESS = {
-  admin:             ['index.html', 'kas.html', 'absensi.html', 'laporan.html'],
-  pengurus_kas:      ['kas.html', 'laporan.html'],
-  pengurus_absensi:  ['absensi.html', 'laporan.html'],
-  pengunjung:        ['laporan.html'],
+  admin:             ['index.html', 'kas.html', 'absensi.html', 'laporan.html', 'leaderboard.html', 'siswa.html', 'profil-siswa.html'],
+  pengurus_kas:      ['kas.html', 'laporan.html', 'leaderboard.html', 'siswa.html', 'profil-siswa.html'],
+  pengurus_absensi:  ['absensi.html', 'laporan.html', 'leaderboard.html', 'siswa.html', 'profil-siswa.html'],
+  pengunjung:        ['laporan.html', 'leaderboard.html', 'siswa.html', 'profil-siswa.html'],
 };
 
 // ── HELPERS GLOBAL ────────────────────────────────────────────

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🎓</div>
+        <div>
+          <div class="brand-name">ManajemenKelas</div>
+          <div class="brand-sub">Sistem Informasi</div>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info">
+          <div id="sidebar-name">Loading…</div>
+          <div id="sidebar-role"></div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-link" href="index.html" data-page="index.html"
+         data-role-access="admin">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a class="nav-link" href="kas.html" data-page="kas.html"
+         data-role-access="admin,pengurus_kas">
+        <span class="nav-icon">💰</span> Kas Kelas
+      </a>
+      <a class="nav-link" href="absensi.html" data-page="absensi.html"
+         data-role-access="admin,pengurus_absensi">
+        <span class="nav-icon">📋</span> Absensi
+      </a>
+      <a class="nav-link" href="laporan.html" data-page="laporan.html"
+         data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">📈</span> Laporan
+      </a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-link" href="#" id="manage-users-link"
+         data-role-access="admin">
+        <span class="nav-icon">👥</span> Kelola Akun
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logout-btn">🚪 Logout</button>
+    </div>
+  </aside>
+  <div id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">Dashboard</h2>
+    </header>
+
+    <main class="page-content">
+      <!-- WELCOME -->
+      <div class="welcome-banner">
+        <h2 id="welcome-msg">Selamat datang! 👋</h2>
+        <p>Ringkasan data manajemen kelas hari ini</p>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green">👥</div>
+          <div>
+            <div class="stat-value" id="stat-siswa">–</div>
+            <div class="stat-label">Total Siswa</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">💰</div>
+          <div>
+            <div class="stat-value" id="stat-kas">–</div>
+            <div class="stat-label">Total Kas</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">📋</div>
+          <div>
+            <div class="stat-value" id="stat-absensi">–</div>
+            <div class="stat-label">Catatan Absensi</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div>
+            <div class="stat-value" id="stat-hadir">–</div>
+            <div class="stat-label">Hadir Hari Ini</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AKUN MANAGEMENT -->
+      <div class="card" id="users-section">
+        <div class="card-header">
+          <h3 class="card-title">👥 Kelola Akun Pengguna</h3>
+          <button class="btn btn-primary btn-sm" id="btn-add-user">+ Tambah Akun</button>
+        </div>
+        <div id="users-table-wrap">
+          <div class="loading-state"><div class="spinner"></div><p>Memuat akun…</p></div>
+        </div>
+      </div>
+
+      <!-- MODAL ADD/EDIT USER -->
+      <div class="modal-overlay" id="modal-user">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title" id="modal-user-title">Tambah Akun</h3>
+            <button class="modal-close" id="modal-user-close">✕</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="user-id" />
+            <div class="form-group">
+              <label class="form-label">Nama Lengkap</label>
+              <input class="form-control" type="text" id="user-name" placeholder="Nama lengkap" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" id="user-email" placeholder="email@contoh.com" />
+            </div>
+            <div class="form-group" id="user-pass-group">
+              <label class="form-label">Password</label>
+              <input class="form-control" type="password" id="user-password" placeholder="Min. 6 karakter" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <select class="form-control" id="user-role">
+                <option value="admin">Admin</option>
+                <option value="pengurus_kas">Pengurus Kas</option>
+                <option value="pengurus_absensi">Pengurus Absensi</option>
+                <option value="pengunjung">Pengunjung</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" id="modal-user-cancel">Batal</button>
+            <button class="btn btn-primary" id="modal-user-save">Simpan</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth(['admin']);
+if (!user) throw new Error('No access');
+
+// Welcome message
+const name = user.profile?.full_name || user.email || 'Admin';
+document.getElementById('welcome-msg').textContent = `Selamat datang, ${name}! 👋`;
+
+// ── LOAD STATS ────────────────────────────────────────────────
+async function loadStats() {
+  const today = new Date().toISOString().split('T')[0];
+  const [siswaRes, kasRes, absRes, hadirRes] = await Promise.all([
+    supabaseClient.from('students').select('id', { count: 'exact', head: true }),
+    supabaseClient.from('cash_payments').select('nominal'),
+    supabaseClient.from('attendances').select('id', { count: 'exact', head: true }),
+    supabaseClient.from('attendances').select('id', { count: 'exact', head: true })
+      .eq('tanggal', today).eq('status', 'Hadir'),
+  ]);
+
+  document.getElementById('stat-siswa').textContent  = siswaRes.count ?? 0;
+  document.getElementById('stat-absensi').textContent = absRes.count ?? 0;
+  document.getElementById('stat-hadir').textContent  = hadirRes.count ?? 0;
+
+  const total = (kasRes.data || []).reduce((s, r) => s + Number(r.nominal), 0);
+  document.getElementById('stat-kas').textContent = App.formatCurrency(total);
+}
+
+loadStats();
+
+// ── LOAD USERS ────────────────────────────────────────────────
+async function loadUsers() {
+  const { data, error } = await supabaseClient.from('profiles').select('*').order('full_name');
+  const wrap = document.getElementById('users-table-wrap');
+  if (error || !data?.length) { App.showEmpty('users-table-wrap', 'Belum ada akun terdaftar.'); return; }
+
+  wrap.innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead><tr>
+          <th>Nama</th><th>Email</th><th>Role</th><th style="text-align:right">Aksi</th>
+        </tr></thead>
+        <tbody>
+          ${data.map(u => `
+            <tr>
+              <td>${u.full_name || '–'}</td>
+              <td>${u.email || '–'}</td>
+              <td>${App.getRoleBadge(u.role)}</td>
+              <td>
+                <div class="td-actions">
+                  <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u.id}','${u.full_name}','${u.email}','${u.role}')">✏️ Edit</button>
+                  <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteUser('${u.id}','${u.full_name}')">🗑️</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+loadUsers();
+
+// ── MODAL USER ────────────────────────────────────────────────
+const modalUser   = document.getElementById('modal-user');
+const modalTitle  = document.getElementById('modal-user-title');
+const passGroup   = document.getElementById('user-pass-group');
+
+function openModal(title, showPass = true) {
+  modalTitle.textContent = title;
+  passGroup.style.display = showPass ? 'block' : 'none';
+  modalUser.classList.add('show');
+}
+
+function closeModal() {
+  modalUser.classList.remove('show');
+  document.getElementById('user-id').value       = '';
+  document.getElementById('user-name').value     = '';
+  document.getElementById('user-email').value    = '';
+  document.getElementById('user-password').value = '';
+  document.getElementById('user-role').value     = 'pengunjung';
+}
+
+document.getElementById('btn-add-user').onclick  = () => openModal('Tambah Akun', true);
+document.getElementById('modal-user-close').onclick  = closeModal;
+document.getElementById('modal-user-cancel').onclick = closeModal;
+
+window.openEditUser = (id, name, email, role) => {
+  document.getElementById('user-id').value    = id;
+  document.getElementById('user-name').value  = name;
+  document.getElementById('user-email').value = email;
+  document.getElementById('user-role').value  = role;
+  openModal('Edit Akun', false);
+};
+
+document.getElementById('modal-user-save').onclick = async () => {
+  const id    = document.getElementById('user-id').value;
+  const name  = document.getElementById('user-name').value.trim();
+  const email = document.getElementById('user-email').value.trim();
+  const pass  = document.getElementById('user-password').value;
+  const role  = document.getElementById('user-role').value;
+
+  if (!name || !role) { App.showToast('Nama dan role wajib diisi.', 'error'); return; }
+
+  if (!id) {
+    // Buat user baru via Supabase – catatan: ini membutuhkan service_role key
+    // Sebagai alternatif frontend, kita insert langsung ke profiles setelah daftar
+    if (!email || !pass) { App.showToast('Email dan password wajib untuk akun baru.', 'error'); return; }
+    const { data: authData, error: authErr } = await supabaseClient.auth.signUp({ email, password: pass });
+    if (authErr) { App.showToast('Gagal membuat akun: ' + authErr.message, 'error'); return; }
+    // Update profile setelah daftar
+    const { error: profErr } = await supabaseClient.from('profiles')
+      .upsert({ id: authData.user.id, full_name: name, email, role });
+    if (profErr) { App.showToast('Akun dibuat tapi profil gagal disimpan.', 'error'); return; }
+    App.showToast('Akun berhasil dibuat! Pengguna perlu memverifikasi email.', 'success');
+  } else {
+    const { error } = await supabaseClient.from('profiles')
+      .update({ full_name: name, role }).eq('id', id);
+    if (error) { App.showToast('Gagal memperbarui akun.', 'error'); return; }
+    App.showToast('Akun berhasil diperbarui.', 'success');
+  }
+
+  closeModal();
+  loadUsers();
+};
+
+window.deleteUser = async (id, name) => {
+  const ok = await App.confirmDelete(`Hapus akun "${name}"?`);
+  if (!ok) return;
+  const { error } = await supabaseClient.from('profiles').delete().eq('id', id);
+  if (error) { App.showToast('Gagal menghapus akun.', 'error'); return; }
+  App.showToast('Akun berhasil dihapus.', 'success');
+  loadUsers();
+};
+</script>
+</body>
+</html>

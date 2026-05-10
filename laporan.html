@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laporan – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🎓</div>
+        <div>
+          <div class="brand-name">ManajemenKelas</div>
+          <div class="brand-sub">Sistem Informasi</div>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info">
+          <div id="sidebar-name">Loading…</div>
+          <div id="sidebar-role"></div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-link" href="index.html" data-page="index.html"
+         data-role-access="admin">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a class="nav-link" href="kas.html" data-page="kas.html"
+         data-role-access="admin,pengurus_kas">
+        <span class="nav-icon">💰</span> Kas Kelas
+      </a>
+      <a class="nav-link" href="absensi.html" data-page="absensi.html"
+         data-role-access="admin,pengurus_absensi">
+        <span class="nav-icon">📋</span> Absensi
+      </a>
+      <a class="nav-link" href="laporan.html" data-page="laporan.html"
+         data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">📈</span> Laporan
+      </a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-link" href="index.html" data-role-access="admin">
+        <span class="nav-icon">👥</span> Kelola Akun
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logout-btn">🚪 Logout</button>
+    </div>
+  </aside>
+  <div id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">📈 Laporan</h2>
+    </header>
+
+    <main class="page-content">
+      <div class="page-header">
+        <h1>Laporan Kelas</h1>
+        <p>Lihat ringkasan dan detail data kas serta absensi</p>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-kas-btn">💰 Laporan Kas</button>
+        <button class="tab-btn" id="tab-abs-btn">📋 Laporan Absensi</button>
+        <button class="tab-btn" id="tab-rekap-btn">📊 Rekap Siswa</button>
+      </div>
+
+      <!-- ── TAB KAS ─────────────────────────────────────────── -->
+      <div id="tab-kas">
+        <div class="stats-grid" style="margin-bottom:20px;">
+          <div class="stat-card">
+            <div class="stat-icon orange">💰</div>
+            <div><div class="stat-value" id="lap-kas-total">–</div><div class="stat-label">Total Kas</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">📄</div>
+            <div><div class="stat-value" id="lap-kas-count">–</div><div class="stat-label">Transaksi</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">📅</div>
+            <div><div class="stat-value" id="lap-kas-bulan">–</div><div class="stat-label">Bulan Dipilih</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Detail Pembayaran</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+              <input type="month" class="filter-control" id="lap-filter-bulan"
+                     style="min-width:150px;" />
+              <button class="btn btn-secondary btn-sm" id="lap-kas-reset">Semua</button>
+            </div>
+          </div>
+          <div id="lap-kas-table">
+            <div class="loading-state"><div class="spinner"></div><p>Memuat…</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB ABSENSI ─────────────────────────────────────── -->
+      <div id="tab-abs" style="display:none;">
+        <div class="stats-grid" style="margin-bottom:20px;">
+          <div class="stat-card">
+            <div class="stat-icon green">✅</div>
+            <div><div class="stat-value" id="lap-hadir">–</div><div class="stat-label">Hadir</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange">📝</div>
+            <div><div class="stat-value" id="lap-izin">–</div><div class="stat-label">Izin</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">🤒</div>
+            <div><div class="stat-value" id="lap-sakit">–</div><div class="stat-label">Sakit</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">❌</div>
+            <div><div class="stat-value" id="lap-alpha">–</div><div class="stat-label">Alpha</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Detail Absensi</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+              <div class="filter-group">
+                <label class="filter-label">Dari</label>
+                <input type="date" class="filter-control" id="lap-abs-dari" />
+              </div>
+              <div class="filter-group">
+                <label class="filter-label">Sampai</label>
+                <input type="date" class="filter-control" id="lap-abs-sampai" />
+              </div>
+              <div class="filter-group">
+                <label class="filter-label">Status</label>
+                <select class="filter-control" id="lap-abs-status">
+                  <option value="">Semua</option>
+                  <option>Hadir</option><option>Izin</option>
+                  <option>Sakit</option><option>Alpha</option>
+                </select>
+              </div>
+              <button class="btn btn-secondary btn-sm" id="lap-abs-reset"
+                      style="align-self:flex-end;">Reset</button>
+            </div>
+          </div>
+          <div id="lap-abs-table">
+            <div class="loading-state"><div class="spinner"></div><p>Memuat…</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB REKAP SISWA ──────────────────────────────────── -->
+      <div id="tab-rekap" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Rekap Kehadiran & Kas per Siswa</h3>
+            <div style="display:flex;gap:8px;align-items:flex-end;">
+              <div class="filter-group">
+                <label class="filter-label">Bulan</label>
+                <input type="month" class="filter-control" id="rekap-bulan" style="min-width:150px;" />
+              </div>
+              <button class="btn btn-secondary btn-sm" id="rekap-semua"
+                      style="align-self:flex-end;">Semua</button>
+            </div>
+          </div>
+          <div id="rekap-table">
+            <div class="loading-state"><div class="spinner"></div><p>Memuat…</p></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth(['admin', 'pengurus_kas', 'pengurus_absensi', 'pengunjung']);
+if (!user) throw new Error('No access');
+
+// ── TABS ─────────────────────────────────────────────────────
+const tabs = {
+  kas:   { btn: 'tab-kas-btn',   panel: 'tab-kas'   },
+  abs:   { btn: 'tab-abs-btn',   panel: 'tab-abs'   },
+  rekap: { btn: 'tab-rekap-btn', panel: 'tab-rekap' },
+};
+
+function switchTab(active) {
+  Object.entries(tabs).forEach(([key, { btn, panel }]) => {
+    document.getElementById(btn).classList.toggle('active', key === active);
+    document.getElementById(panel).style.display = key === active ? 'block' : 'none';
+  });
+  if (active === 'kas')   loadLapKas();
+  if (active === 'abs')   loadLapAbs();
+  if (active === 'rekap') loadRekap();
+}
+
+document.getElementById('tab-kas-btn').onclick   = () => switchTab('kas');
+document.getElementById('tab-abs-btn').onclick   = () => switchTab('abs');
+document.getElementById('tab-rekap-btn').onclick = () => switchTab('rekap');
+
+// ── DEFAULT FILTERS ───────────────────────────────────────────
+const today = new Date();
+const bulanNow = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+document.getElementById('lap-filter-bulan').value = bulanNow;
+document.getElementById('rekap-bulan').value      = bulanNow;
+
+// ── LAP KAS ───────────────────────────────────────────────────
+async function loadLapKas() {
+  const bulan = document.getElementById('lap-filter-bulan').value;
+  let query = supabaseClient
+    .from('cash_payments')
+    .select('*, students(nama)')
+    .order('tanggal_bayar', { ascending: false });
+
+  if (bulan) {
+    const [yr, mn] = bulan.split('-');
+    query = query
+      .gte('tanggal_bayar', `${yr}-${mn}-01`)
+      .lte('tanggal_bayar', `${yr}-${mn}-31`);
+  }
+
+  const { data } = await query;
+  const rows = data || [];
+
+  const total = rows.reduce((s, r) => s + Number(r.nominal), 0);
+  document.getElementById('lap-kas-total').textContent = App.formatCurrency(total);
+  document.getElementById('lap-kas-count').textContent = rows.length;
+  document.getElementById('lap-kas-bulan').textContent = bulan
+    ? new Date(bulan + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+    : 'Semua';
+
+  if (!rows.length) { App.showEmpty('lap-kas-table', 'Tidak ada data pembayaran.'); return; }
+
+  document.getElementById('lap-kas-table').innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Siswa</th><th>Tanggal</th><th>Nominal</th><th>Keterangan</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map((r, i) => `
+            <tr>
+              <td>${i+1}</td>
+              <td>${r.students?.nama || '–'}</td>
+              <td>${App.formatDate(r.tanggal_bayar)}</td>
+              <td>${App.formatCurrency(r.nominal)}</td>
+              <td>${r.keterangan || '–'}</td>
+            </tr>`).join('')}
+          <tr style="background:var(--accent-light);font-weight:700;">
+            <td colspan="3" style="text-align:right">Total</td>
+            <td>${App.formatCurrency(total)}</td><td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+document.getElementById('lap-filter-bulan').onchange = loadLapKas;
+document.getElementById('lap-kas-reset').onclick = () => {
+  document.getElementById('lap-filter-bulan').value = '';
+  loadLapKas();
+};
+
+// ── LAP ABSENSI ───────────────────────────────────────────────
+async function loadLapAbs() {
+  const dari   = document.getElementById('lap-abs-dari').value;
+  const sampai = document.getElementById('lap-abs-sampai').value;
+  const status = document.getElementById('lap-abs-status').value;
+
+  let query = supabaseClient
+    .from('attendances')
+    .select('*, students(nama)')
+    .order('tanggal', { ascending: false });
+
+  if (dari)   query = query.gte('tanggal', dari);
+  if (sampai) query = query.lte('tanggal', sampai);
+  if (status) query = query.eq('status', status);
+
+  const { data } = await query;
+  const rows = data || [];
+
+  document.getElementById('lap-hadir').textContent = rows.filter(r => r.status === 'Hadir').length;
+  document.getElementById('lap-izin').textContent  = rows.filter(r => r.status === 'Izin').length;
+  document.getElementById('lap-sakit').textContent = rows.filter(r => r.status === 'Sakit').length;
+  document.getElementById('lap-alpha').textContent = rows.filter(r => r.status === 'Alpha').length;
+
+  if (!rows.length) { App.showEmpty('lap-abs-table', 'Tidak ada data absensi.'); return; }
+
+  document.getElementById('lap-abs-table').innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Siswa</th><th>Tanggal</th><th>Status</th><th>Keterangan</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map((r, i) => `
+            <tr>
+              <td>${i+1}</td>
+              <td>${r.students?.nama || '–'}</td>
+              <td>${App.formatDate(r.tanggal)}</td>
+              <td>${App.getStatusBadge(r.status)}</td>
+              <td>${r.keterangan || '–'}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+document.getElementById('lap-abs-dari').onchange    = loadLapAbs;
+document.getElementById('lap-abs-sampai').onchange  = loadLapAbs;
+document.getElementById('lap-abs-status').onchange  = loadLapAbs;
+document.getElementById('lap-abs-reset').onclick = () => {
+  document.getElementById('lap-abs-dari').value   = '';
+  document.getElementById('lap-abs-sampai').value = '';
+  document.getElementById('lap-abs-status').value = '';
+  loadLapAbs();
+};
+
+// ── REKAP SISWA ───────────────────────────────────────────────
+async function loadRekap() {
+  const bulan = document.getElementById('rekap-bulan').value;
+
+  const { data: students } = await supabaseClient.from('students').select('id,nama').order('nama');
+  if (!students?.length) { App.showEmpty('rekap-table', 'Belum ada siswa terdaftar.'); return; }
+
+  let kasQuery = supabaseClient.from('cash_payments').select('student_id,nominal');
+  let absQuery = supabaseClient.from('attendances').select('student_id,status');
+
+  if (bulan) {
+    const [yr, mn] = bulan.split('-');
+    kasQuery = kasQuery
+      .gte('tanggal_bayar', `${yr}-${mn}-01`)
+      .lte('tanggal_bayar', `${yr}-${mn}-31`);
+    absQuery = absQuery
+      .gte('tanggal', `${yr}-${mn}-01`)
+      .lte('tanggal', `${yr}-${mn}-31`);
+  }
+
+  const [{ data: kasData }, { data: absData }] = await Promise.all([kasQuery, absQuery]);
+
+  const kasMap = {};
+  (kasData || []).forEach(k => {
+    kasMap[k.student_id] = (kasMap[k.student_id] || 0) + Number(k.nominal);
+  });
+
+  const absMap = {};
+  (absData || []).forEach(a => {
+    if (!absMap[a.student_id]) absMap[a.student_id] = { Hadir:0, Izin:0, Sakit:0, Alpha:0 };
+    absMap[a.student_id][a.status] = (absMap[a.student_id][a.status] || 0) + 1;
+  });
+
+  document.getElementById('rekap-table').innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Nama Siswa</th>
+          <th>Total Kas</th>
+          <th>Hadir</th><th>Izin</th><th>Sakit</th><th>Alpha</th>
+        </tr></thead>
+        <tbody>
+          ${students.map((s, i) => {
+            const abs = absMap[s.id] || { Hadir:0, Izin:0, Sakit:0, Alpha:0 };
+            return `<tr>
+              <td>${i+1}</td>
+              <td>${s.nama}</td>
+              <td>${App.formatCurrency(kasMap[s.id] || 0)}</td>
+              <td>${App.getStatusBadge('Hadir')} ${abs.Hadir}</td>
+              <td>${App.getStatusBadge('Izin')} ${abs.Izin}</td>
+              <td>${App.getStatusBadge('Sakit')} ${abs.Sakit}</td>
+              <td>${App.getStatusBadge('Alpha')} ${abs.Alpha}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+document.getElementById('rekap-bulan').onchange = loadRekap;
+document.getElementById('rekap-semua').onclick  = () => {
+  document.getElementById('rekap-bulan').value = '';
+  loadRekap();
+};
+
+// Init
+switchTab('kas');
+</script>
+</body>
+</html>

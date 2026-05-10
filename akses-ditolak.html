@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Akses Ditolak – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="denied-page">
+  <div class="denied-card">
+    <div class="denied-icon">🚫</div>
+    <h1>Akses Ditolak</h1>
+    <p>Anda tidak memiliki izin untuk mengakses halaman ini.<br />
+       Silakan hubungi admin untuk bantuan.</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-secondary" id="back-btn">← Kembali</button>
+      <button class="btn btn-danger" id="logout-btn2">Logout</button>
+    </div>
+    <p style="margin-top:20px;font-size:.8rem;color:var(--text-muted);">
+      Role Anda saat ini: <strong id="current-role">–</strong>
+    </p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import { supabaseClient } from './supabase.js';
+
+const { data: { session } } = await supabaseClient.auth.getSession();
+if (!session) { window.location.href = 'login.html'; }
+else {
+  const { data: profile } = await supabaseClient
+    .from('profiles').select('role').eq('id', session.user.id).single();
+  const roleLabels = {
+    admin:'Admin', pengurus_kas:'Pengurus Kas',
+    pengurus_absensi:'Pengurus Absensi', pengunjung:'Pengunjung'
+  };
+  document.getElementById('current-role').textContent =
+    roleLabels[profile?.role] || profile?.role || 'Tidak diketahui';
+}
+
+document.getElementById('back-btn').onclick = () => history.back();
+document.getElementById('logout-btn2').onclick = async () => {
+  await supabaseClient.auth.signOut();
+  window.location.href = 'login.html';
+};
+</script>
+</body>
+</html>

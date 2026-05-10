@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Absensi – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🎓</div>
+        <div>
+          <div class="brand-name">ManajemenKelas</div>
+          <div class="brand-sub">Sistem Informasi</div>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info">
+          <div id="sidebar-name">Loading…</div>
+          <div id="sidebar-role"></div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-link" href="index.html" data-page="index.html"
+         data-role-access="admin">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a class="nav-link" href="kas.html" data-page="kas.html"
+         data-role-access="admin,pengurus_kas">
+        <span class="nav-icon">💰</span> Kas Kelas
+      </a>
+      <a class="nav-link" href="absensi.html" data-page="absensi.html"
+         data-role-access="admin,pengurus_absensi">
+        <span class="nav-icon">📋</span> Absensi
+      </a>
+      <a class="nav-link" href="laporan.html" data-page="laporan.html"
+         data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
+        <span class="nav-icon">📈</span> Laporan
+      </a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-link" href="index.html" data-role-access="admin">
+        <span class="nav-icon">👥</span> Kelola Akun
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logout-btn">🚪 Logout</button>
+    </div>
+  </aside>
+  <div id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">📋 Absensi</h2>
+    </header>
+
+    <main class="page-content">
+      <!-- STATS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div><div class="stat-value" id="stat-hadir">0</div><div class="stat-label">Hadir</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">📝</div>
+          <div><div class="stat-value" id="stat-izin">0</div><div class="stat-label">Izin</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">🤒</div>
+          <div><div class="stat-value" id="stat-sakit">0</div><div class="stat-label">Sakit</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">❌</div>
+          <div><div class="stat-value" id="stat-alpha">0</div><div class="stat-label">Alpha</div></div>
+        </div>
+      </div>
+
+      <!-- TABEL ABSENSI -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Daftar Absensi</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" id="btn-absensi-massal">📋 Input Massal</button>
+            <button class="btn btn-primary btn-sm" id="btn-add-abs">+ Tambah</button>
+          </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label class="filter-label">Tanggal</label>
+            <input type="date" class="filter-control" id="filter-tanggal" />
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Status</label>
+            <select class="filter-control" id="filter-status">
+              <option value="">Semua Status</option>
+              <option>Hadir</option><option>Izin</option>
+              <option>Sakit</option><option>Alpha</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Siswa</label>
+            <input type="text" class="filter-control" id="filter-siswa-abs" placeholder="Nama siswa…" />
+          </div>
+          <div class="filter-group" style="justify-content:flex-end;margin-top:auto">
+            <button class="btn btn-secondary btn-sm" id="btn-reset-abs">Reset</button>
+          </div>
+        </div>
+
+        <div id="abs-table-wrap">
+          <div class="loading-state"><div class="spinner"></div><p>Memuat data…</p></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL ABSENSI TUNGGAL -->
+<div class="modal-overlay" id="modal-abs">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-abs-title">Tambah Absensi</h3>
+      <button class="modal-close" id="modal-abs-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="abs-id" />
+      <div class="form-group">
+        <label class="form-label">Siswa</label>
+        <select class="form-control" id="abs-student">
+          <option value="">-- Pilih Siswa --</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal</label>
+          <input class="form-control" type="date" id="abs-tanggal" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-control" id="abs-status">
+            <option>Hadir</option><option>Izin</option>
+            <option>Sakit</option><option>Alpha</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Keterangan (opsional)</label>
+        <input class="form-control" type="text" id="abs-keterangan" placeholder="Keterangan tambahan…" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-abs-cancel">Batal</button>
+      <button class="btn btn-primary" id="modal-abs-save">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ABSENSI MASSAL -->
+<div class="modal-overlay" id="modal-massal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <h3 class="modal-title">📋 Input Absensi Massal</h3>
+      <button class="modal-close" id="modal-massal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Tanggal</label>
+        <input class="form-control" type="date" id="massal-tanggal" />
+      </div>
+      <p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;">
+        Klik pada status siswa untuk mengubah. Default: <strong>Hadir</strong>
+      </p>
+      <div id="massal-grid">
+        <div class="loading-state"><div class="spinner"></div><p>Memuat siswa…</p></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-massal-cancel">Batal</button>
+      <button class="btn btn-primary" id="modal-massal-save">Simpan Semua</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth(['admin', 'pengurus_absensi']);
+if (!user) throw new Error('No access');
+
+const today = new Date().toISOString().split('T')[0];
+
+// ── LOAD STUDENTS ─────────────────────────────────────────────
+const { data: students } = await supabaseClient.from('students').select('id,nama').order('nama');
+const allStudents = students || [];
+
+const sel = document.getElementById('abs-student');
+allStudents.forEach(s => {
+  const opt = document.createElement('option');
+  opt.value = s.id; opt.textContent = s.nama; sel.appendChild(opt);
+});
+
+// ── LOAD ABSENSI ──────────────────────────────────────────────
+async function loadAbsensi() {
+  const tanggal = document.getElementById('filter-tanggal').value;
+  const status  = document.getElementById('filter-status').value;
+  const search  = document.getElementById('filter-siswa-abs').value.trim().toLowerCase();
+
+  let query = supabaseClient
+    .from('attendances')
+    .select('*, students(nama)')
+    .order('tanggal', { ascending: false });
+
+  if (tanggal) query = query.eq('tanggal', tanggal);
+  if (status)  query = query.eq('status', status);
+
+  const { data, error } = await query;
+  if (error) { App.showToast('Gagal memuat absensi.', 'error'); return; }
+
+  let rows = data || [];
+  if (search) rows = rows.filter(r => r.students?.nama?.toLowerCase().includes(search));
+
+  // Stats
+  document.getElementById('stat-hadir').textContent = rows.filter(r => r.status === 'Hadir').length;
+  document.getElementById('stat-izin').textContent  = rows.filter(r => r.status === 'Izin').length;
+  document.getElementById('stat-sakit').textContent = rows.filter(r => r.status === 'Sakit').length;
+  document.getElementById('stat-alpha').textContent = rows.filter(r => r.status === 'Alpha').length;
+
+  if (!rows.length) { App.showEmpty('abs-table-wrap', 'Belum ada data absensi.'); return; }
+
+  document.getElementById('abs-table-wrap').innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Siswa</th><th>Tanggal</th>
+          <th>Status</th><th>Keterangan</th><th style="text-align:right">Aksi</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map((r, i) => `
+            <tr>
+              <td>${i+1}</td>
+              <td>${r.students?.nama || '–'}</td>
+              <td>${App.formatDate(r.tanggal)}</td>
+              <td>${App.getStatusBadge(r.status)}</td>
+              <td>${r.keterangan || '–'}</td>
+              <td>
+                <div class="td-actions">
+                  <button class="btn btn-ghost btn-sm"
+                    onclick='openEditAbs(${JSON.stringify(r)})'>✏️</button>
+                  <button class="btn btn-ghost btn-sm" style="color:var(--danger)"
+                    onclick="doDeleteAbs('${r.id}')">🗑️</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+loadAbsensi();
+
+// Filters
+document.getElementById('filter-tanggal').onchange    = loadAbsensi;
+document.getElementById('filter-status').onchange     = loadAbsensi;
+document.getElementById('filter-siswa-abs').oninput   = loadAbsensi;
+document.getElementById('btn-reset-abs').onclick = () => {
+  document.getElementById('filter-tanggal').value    = '';
+  document.getElementById('filter-status').value     = '';
+  document.getElementById('filter-siswa-abs').value  = '';
+  loadAbsensi();
+};
+
+// ── MODAL TUNGGAL ─────────────────────────────────────────────
+const modalAbs = document.getElementById('modal-abs');
+
+function openModalAbs(title) {
+  document.getElementById('modal-abs-title').textContent = title;
+  modalAbs.classList.add('show');
+}
+
+function closeModalAbs() {
+  modalAbs.classList.remove('show');
+  document.getElementById('abs-id').value         = '';
+  document.getElementById('abs-student').value    = '';
+  document.getElementById('abs-tanggal').value    = '';
+  document.getElementById('abs-status').value     = 'Hadir';
+  document.getElementById('abs-keterangan').value = '';
+}
+
+document.getElementById('btn-add-abs').onclick      = () => {
+  document.getElementById('abs-tanggal').value = today;
+  openModalAbs('Tambah Absensi');
+};
+document.getElementById('modal-abs-close').onclick  = closeModalAbs;
+document.getElementById('modal-abs-cancel').onclick = closeModalAbs;
+
+window.openEditAbs = (r) => {
+  document.getElementById('abs-id').value         = r.id;
+  document.getElementById('abs-student').value    = r.student_id;
+  document.getElementById('abs-tanggal').value    = App.formatDateInput(r.tanggal);
+  document.getElementById('abs-status').value     = r.status;
+  document.getElementById('abs-keterangan').value = r.keterangan || '';
+  openModalAbs('Edit Absensi');
+};
+
+document.getElementById('modal-abs-save').onclick = async () => {
+  const id         = document.getElementById('abs-id').value;
+  const student_id = document.getElementById('abs-student').value;
+  const tanggal    = document.getElementById('abs-tanggal').value;
+  const status     = document.getElementById('abs-status').value;
+  const keterangan = document.getElementById('abs-keterangan').value.trim();
+
+  if (!student_id) { App.showToast('Pilih siswa.', 'error'); return; }
+  if (!tanggal)    { App.showToast('Tanggal wajib diisi.', 'error'); return; }
+
+  // Cek duplikat (hanya untuk tambah baru)
+  if (!id) {
+    const { data: dup } = await supabaseClient
+      .from('attendances')
+      .select('id')
+      .eq('student_id', student_id)
+      .eq('tanggal', tanggal)
+      .maybeSingle();
+    if (dup) { App.showToast('Absensi siswa ini pada tanggal tersebut sudah ada.', 'error'); return; }
+  }
+
+  const payload = { student_id, tanggal, status, keterangan };
+  let error;
+  if (id) {
+    ({ error } = await supabaseClient.from('attendances').update(payload).eq('id', id));
+  } else {
+    ({ error } = await supabaseClient.from('attendances').insert(payload));
+  }
+
+  if (error) { App.showToast('Gagal menyimpan: ' + error.message, 'error'); return; }
+  App.showToast(id ? 'Absensi diperbarui.' : 'Absensi ditambahkan.', 'success');
+  closeModalAbs();
+  loadAbsensi();
+};
+
+window.doDeleteAbs = async (id) => {
+  const ok = await App.confirmDelete('Hapus data absensi ini?');
+  if (!ok) return;
+  const { error } = await supabaseClient.from('attendances').delete().eq('id', id);
+  if (error) { App.showToast('Gagal menghapus.', 'error'); return; }
+  App.showToast('Absensi dihapus.', 'success');
+  loadAbsensi();
+};
+
+// ── MODAL MASSAL ──────────────────────────────────────────────
+const modalMassal = document.getElementById('modal-massal');
+const statusCycle = ['Hadir', 'Izin', 'Sakit', 'Alpha'];
+const massalState = {}; // student_id -> status
+
+document.getElementById('btn-absensi-massal').onclick = async () => {
+  document.getElementById('massal-tanggal').value = today;
+  const grid = document.getElementById('massal-grid');
+
+  if (!allStudents.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada siswa terdaftar.</p></div>';
+  } else {
+    allStudents.forEach(s => { massalState[s.id] = 'Hadir'; });
+
+    const statusColors = { Hadir:'badge-hadir', Izin:'badge-izin', Sakit:'badge-sakit', Alpha:'badge-alpha' };
+
+    grid.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;">
+      ${allStudents.map(s => `
+        <div class="absensi-quick-card" id="massal-card-${s.id}"
+             onclick="cycleStatus('${s.id}')">
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:.88rem">${s.nama}</div>
+          </div>
+          <span class="badge badge-hadir" id="massal-badge-${s.id}">Hadir</span>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  modalMassal.classList.add('show');
+};
+
+window.cycleStatus = (studentId) => {
+  const cur = massalState[studentId] || 'Hadir';
+  const next = statusCycle[(statusCycle.indexOf(cur) + 1) % statusCycle.length];
+  massalState[studentId] = next;
+  const badge = document.getElementById(`massal-badge-${studentId}`);
+  badge.className = `badge badge-${next.toLowerCase()}`;
+  badge.textContent = next;
+};
+
+document.getElementById('modal-massal-close').onclick  = () => modalMassal.classList.remove('show');
+document.getElementById('modal-massal-cancel').onclick = () => modalMassal.classList.remove('show');
+
+document.getElementById('modal-massal-save').onclick = async () => {
+  const tanggal = document.getElementById('massal-tanggal').value;
+  if (!tanggal) { App.showToast('Pilih tanggal terlebih dahulu.', 'error'); return; }
+
+  // Cek duplikat untuk tanggal yang dipilih
+  const { data: existing } = await supabaseClient
+    .from('attendances').select('student_id').eq('tanggal', tanggal);
+  const existingIds = new Set((existing || []).map(e => e.student_id));
+
+  const rows = allStudents
+    .filter(s => !existingIds.has(s.id))
+    .map(s => ({ student_id: s.id, tanggal, status: massalState[s.id] || 'Hadir', keterangan: '' }));
+
+  const skipCount = allStudents.length - rows.length;
+
+  if (!rows.length) {
+    App.showToast(`Semua siswa sudah diabsen pada ${App.formatDate(tanggal)}.`, 'info');
+    return;
+  }
+
+  const { error } = await supabaseClient.from('attendances').insert(rows);
+  if (error) { App.showToast('Gagal menyimpan: ' + error.message, 'error'); return; }
+
+  let msg = `Berhasil menyimpan ${rows.length} absensi.`;
+  if (skipCount > 0) msg += ` ${skipCount} siswa dilewati (sudah ada).`;
+  App.showToast(msg, 'success');
+  modalMassal.classList.remove('show');
+  loadAbsensi();
+};
+</script>
+</body>
+</html>

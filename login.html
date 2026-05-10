@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-logo">🎓</div>
+      <h1>Manajemen Kelas</h1>
+      <p>Masuk untuk melanjutkan</p>
+    </div>
+
+    <div id="login-error" class="login-error"></div>
+
+    <div class="form-group">
+      <label class="form-label" for="email">Email</label>
+      <input class="form-control" type="email" id="email"
+             placeholder="email@contoh.com" autocomplete="email" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="password">Password</label>
+      <input class="form-control" type="password" id="password"
+             placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <button class="btn btn-primary" id="login-btn" type="button">
+      <span id="login-btn-text">Masuk</span>
+    </button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import { supabaseClient } from './supabase.js';
+
+// Redirect jika sudah login
+const { data: { session } } = await supabaseClient.auth.getSession();
+if (session) {
+  const { data: profile } = await supabaseClient
+    .from('profiles').select('role').eq('id', session.user.id).single();
+  const role = profile?.role;
+  const dest = role === 'admin'
+    ? 'index.html'
+    : role === 'pengurus_kas'     ? 'kas.html'
+    : role === 'pengurus_absensi' ? 'absensi.html'
+    : 'laporan.html';
+  window.location.href = dest;
+}
+
+const loginBtn  = document.getElementById('login-btn');
+const errorEl   = document.getElementById('login-error');
+const emailEl   = document.getElementById('email');
+const passEl    = document.getElementById('password');
+
+function showError(msg) {
+  errorEl.textContent = msg;
+  errorEl.style.display = 'block';
+}
+
+async function doLogin() {
+  errorEl.style.display = 'none';
+  const email    = emailEl.value.trim();
+  const password = passEl.value;
+
+  if (!email || !password) { showError('Email dan password wajib diisi.'); return; }
+
+  loginBtn.disabled = true;
+  loginBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;"></span>';
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    showError('Email atau password salah. Silakan coba lagi.');
+    loginBtn.disabled = false;
+    loginBtn.innerHTML = '<span id="login-btn-text">Masuk</span>';
+    return;
+  }
+
+  // Ambil role
+  const { data: profile } = await supabaseClient
+    .from('profiles').select('role').eq('id', data.user.id).single();
+
+  const role = profile?.role;
+  const dest = role === 'admin'
+    ? 'index.html'
+    : role === 'pengurus_kas'     ? 'kas.html'
+    : role === 'pengurus_absensi' ? 'absensi.html'
+    : 'laporan.html';
+
+  window.location.href = dest;
+}
+
+loginBtn.addEventListener('click', doLogin);
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>

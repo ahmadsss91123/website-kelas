@@ -5,217 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Confession – Manajemen Kelas</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    .confession-wall {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-      margin-top: 8px;
-    }
-    .confession-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      position: relative;
-      transition: transform var(--transition), box-shadow var(--transition);
-      box-shadow: var(--shadow-sm);
-    }
-    .confession-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-    .confession-card.pending {
-      border-left: 4px solid var(--warning);
-      background: var(--warning-light);
-    }
-    .confession-type-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-size: .7rem; font-weight: 700; padding: 3px 10px;
-      border-radius: 20px; margin-bottom: 10px;
-      text-transform: uppercase; letter-spacing: .05em;
-    }
-    .type-confession  { background: #F3EEFF; color: #6B21A8; }
-    .type-opini       { background: var(--info-light); color: var(--info); }
-    .type-kritik      { background: var(--danger-light); color: var(--danger); }
-    .type-pertanyaan  { background: var(--warning-light); color: var(--warning); }
-    .type-lucu        { background: #FFF3CD; color: #856404; }
-
-    .confession-text {
-      font-size: .92rem;
-      line-height: 1.7;
-      color: var(--text-primary);
-      margin-bottom: 12px;
-    }
-    .confession-meta {
-      display: flex; align-items: center; justify-content: space-between;
-      font-size: .75rem; color: var(--text-muted);
-      border-top: 1px solid var(--border); padding-top: 10px;
-      margin-top: auto;
-    }
-    .confession-actions { display: flex; gap: 6px; }
-
-    .send-form {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 28px;
-      margin-bottom: 28px;
-      box-shadow: var(--shadow-sm);
-    }
-    .send-form h3 {
-      font-family: var(--font-display);
-      font-size: 1.15rem; margin-bottom: 4px;
-    }
-    .send-form p { font-size: .85rem; color: var(--text-secondary); margin-bottom: 20px; }
-
-    .type-selector {
-      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
-    }
-    .type-opt {
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1.5px solid var(--border);
-      background: var(--surface);
-      font-size: .8rem; font-weight: 600;
-      cursor: pointer; transition: all var(--transition);
-      color: var(--text-secondary);
-    }
-    .type-opt.selected, .type-opt:hover {
-      border-color: var(--accent); background: var(--accent-light); color: var(--accent);
-    }
-
-    .tabs-admin {
-      display: flex; gap: 2px;
-      background: var(--surface-2);
-      border-radius: var(--radius); padding: 4px;
-      border: 1px solid var(--border);
-      margin-bottom: 20px;
-    }
-    .tab-admin-btn {
-      flex: 1; padding: 8px 16px; border: none;
-      background: transparent; border-radius: 8px;
-      font-size: .85rem; font-weight: 600;
-      cursor: pointer; color: var(--text-secondary);
-      transition: all var(--transition);
-    }
-    .tab-admin-btn.active {
-      background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow-sm);
-    }
-    .pending-count {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 18px; height: 18px;
-      background: var(--danger); color: #fff;
-      border-radius: 50%; font-size: .65rem; font-weight: 700;
-      margin-left: 5px;
-    }
-
-    .reaction-row { display: flex; gap: 6px; margin-top: 8px; }
-    .reaction-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 3px 10px; border-radius: 20px;
-      border: 1.5px solid var(--border);
-      background: var(--surface-2); font-size: .78rem;
-      cursor: pointer; transition: all var(--transition);
-      color: var(--text-secondary); font-weight: 600;
-    }
-    .reaction-btn:hover, .reaction-btn.reacted {
-      border-color: var(--accent); background: var(--accent-light); color: var(--accent);
-    }
-  </style>
 </head>
 <body>
 <div class="app-layout">
-  <aside id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-brand">
-        <div class="brand-icon">🎓</div>
-        <div><div class="brand-name">ManajemenKelas</div><div class="brand-sub">Sistem Informasi</div></div>
-      </div>
-      <div class="sidebar-user">
-        <div class="user-avatar" id="sidebar-avatar">A</div>
-        <div class="user-info"><div id="sidebar-name">Loading…</div><div id="sidebar-role"></div></div>
-      </div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Menu Utama</div>
-      <a class="nav-link" href="index.html" data-page="index.html" data-role-access="admin"><span class="nav-icon">📊</span> Dashboard</a>
-      <a class="nav-link" href="kas.html" data-page="kas.html" data-role-access="admin,pengurus_kas"><span class="nav-icon">💰</span> Kas Kelas</a>
-      <a class="nav-link" href="absensi.html" data-page="absensi.html" data-role-access="admin,pengurus_absensi"><span class="nav-icon">📋</span> Absensi</a>
-      <a class="nav-link" href="laporan.html" data-page="laporan.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📈</span> Laporan</a>
-      <div class="nav-section-label">Sosial & Akademik</div>
-      <a class="nav-link" href="confession.html" data-page="confession.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">💬</span> Confession</a>
-      <a class="nav-link" href="memories.html" data-page="memories.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📸</span> Memories</a>
-      <a class="nav-link" href="leaderboard.html" data-page="leaderboard.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">🏆</span> Leaderboard</a>
-      <a class="nav-link" href="jadwal.html" data-page="jadwal.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📅</span> Jadwal</a>
-      <a class="nav-link" href="tugas.html" data-page="tugas.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📝</span> Tugas</a>
-      <a class="nav-link" href="materi.html" data-page="materi.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📚</span> Bank Materi</a>
-      <div class="nav-section-label">Admin</div>
-      <a class="nav-link" href="index.html" data-role-access="admin"><span class="nav-icon">👥</span> Kelola Akun</a>
-    </nav>
-    <div class="sidebar-footer"><button id="logout-btn">🚪 Logout</button></div>
-  </aside>
-  <div id="sidebar-overlay"></div>
-
   <div class="main-content">
     <header class="navbar">
       <button id="sidebar-toggle">☰</button>
-      <h2 class="navbar-title">💬 Confession Box</h2>
+      <h2 class="navbar-title">💌 Confession</h2>
     </header>
-
     <main class="page-content">
-      <!-- SEND FORM -->
-      <div class="send-form">
-        <h3>✉️ Kirim Pesan Anonim</h3>
-        <p>Pesanmu 100% anonim. Admin akan review sebelum ditampilkan ke publik.</p>
-        <div class="type-selector" id="type-selector">
-          <button class="type-opt selected" data-type="confession">🤫 Confession</button>
-          <button class="type-opt" data-type="opini">💡 Opini</button>
-          <button class="type-opt" data-type="lucu">😂 Lucu</button>
-          <button class="type-opt" data-type="kritik">🔥 Kritik</button>
-          <button class="type-opt" data-type="pertanyaan">❓ Pertanyaan</button>
+      <div class="page-header">
+        <h1>Confession / Pesan Anonim</h1>
+        <p>Kirim pesan, confession, kritik, atau saran secara anonim</p>
+      </div>
+
+      <!-- Form Kirim -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-header">
+          <h3 class="card-title">✍️ Kirim Pesan Anonim</h3>
         </div>
         <div class="form-group">
-          <textarea class="form-control" id="confession-text"
-            rows="4" placeholder="Tulis pesanmu di sini... (maks 500 karakter)"
-            maxlength="500"></textarea>
-          <div style="text-align:right;font-size:.75rem;color:var(--text-muted);margin-top:4px;">
-            <span id="char-count">0</span>/500
-          </div>
+          <textarea class="form-control" id="confession-text" placeholder="Tulis pesan anonim kamu di sini..." rows="3"></textarea>
         </div>
-        <div style="display:flex;justify-content:flex-end;">
-          <button class="btn btn-primary" id="btn-send-confession">🚀 Kirim Anonim</button>
-        </div>
-      </div>
-
-      <!-- ADMIN TABS -->
-      <div id="admin-tabs" style="display:none;">
-        <div class="tabs-admin">
-          <button class="tab-admin-btn active" id="tab-approved-btn">
-            ✅ Tampil Publik
-          </button>
-          <button class="tab-admin-btn" id="tab-pending-btn">
-            ⏳ Menunggu Review
-            <span class="pending-count" id="pending-count-badge" style="display:none">0</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- FILTER -->
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label class="filter-label">Kategori</label>
-          <select class="filter-control" id="filter-type">
-            <option value="">Semua</option>
-            <option value="confession">Confession</option>
-            <option value="opini">Opini</option>
-            <option value="lucu">Lucu</option>
-            <option value="kritik">Kritik</option>
-            <option value="pertanyaan">Pertanyaan</option>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <select class="form-control" id="confession-kategori" style="max-width:200px">
+            <option value="confession">💌 Confession</option>
+            <option value="kritik">📣 Kritik</option>
+            <option value="saran">💡 Saran</option>
           </select>
+          <button class="btn btn-primary" id="btn-send-confession">Kirim Anonim</button>
         </div>
+        <p class="form-hint" style="margin-top:8px">Identitas kamu tidak akan ditampilkan. Pesan akan dimoderasi admin sebelum ditampilkan.</p>
       </div>
 
-      <!-- WALL -->
-      <div id="confession-container">
-        <div class="loading-state"><div class="spinner"></div><p>Memuat confession…</p></div>
+      <!-- Admin Tab -->
+      <div class="tabs" id="admin-tabs" style="display:none">
+        <button class="tab active" data-tab="approved">Approved</button>
+        <button class="tab" data-tab="pending">Pending</button>
+        <button class="tab" data-tab="rejected">Rejected</button>
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-bar">
+        <select class="form-control" id="filter-kategori" style="max-width:180px">
+          <option value="">Semua Kategori</option>
+          <option value="confession">Confession</option>
+          <option value="kritik">Kritik</option>
+          <option value="saran">Saran</option>
+        </select>
+      </div>
+
+      <div class="confession-list" id="confession-list">
+        <div class="loading-state"><div class="spinner"></div></div>
       </div>
     </main>
   </div>
@@ -226,175 +67,112 @@
 import './app.js';
 import { supabaseClient } from './supabase.js';
 
-const user = await App.requireAuth(['admin','pengurus_kas','pengurus_absensi','pengunjung']);
+const user = await App.requireAuth();
 if (!user) throw new Error('No access');
-
 const isAdmin = user.profile?.role === 'admin';
-let currentTab = 'approved'; // approved | pending
-let selectedType = 'confession';
+let currentTab = 'approved';
 
-// Show admin tabs
-if (isAdmin) document.getElementById('admin-tabs').style.display = 'block';
-
-// ── TYPE SELECTOR ─────────────────────────────────────────────
-document.querySelectorAll('.type-opt').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.type-opt').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    selectedType = btn.dataset.type;
+if (isAdmin) {
+  document.getElementById('admin-tabs').style.display = '';
+  document.querySelectorAll('#admin-tabs .tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#admin-tabs .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentTab = tab.dataset.tab;
+      loadConfessions();
+    });
   });
-});
-
-// ── CHAR COUNT ────────────────────────────────────────────────
-const textarea = document.getElementById('confession-text');
-textarea.addEventListener('input', () => {
-  document.getElementById('char-count').textContent = textarea.value.length;
-});
-
-// ── LOAD CONFESSIONS ──────────────────────────────────────────
-const typeEmoji = { confession:'🤫', opini:'💡', lucu:'😂', kritik:'🔥', pertanyaan:'❓' };
-const typeClass = { confession:'type-confession', opini:'type-opini', lucu:'type-lucu', kritik:'type-kritik', pertanyaan:'type-pertanyaan' };
+}
 
 async function loadConfessions() {
-  const filterType = document.getElementById('filter-type').value;
-  const container  = document.getElementById('confession-container');
-  container.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Memuat…</p></div>';
+  const kategori = document.getElementById('filter-kategori').value;
+  let query = supabaseClient.from('confessions').select('*').order('created_at', { ascending: false });
 
-  let query = supabaseClient
-    .from('confessions')
-    .select('*')
-    .eq('status', currentTab === 'approved' ? 'approved' : 'pending')
-    .order('created_at', { ascending: false });
-
-  if (filterType) query = query.eq('type', filterType);
+  if (isAdmin) {
+    query = query.eq('status', currentTab);
+  } else {
+    query = query.eq('status', 'approved');
+  }
+  if (kategori) query = query.eq('kategori', kategori);
 
   const { data } = await query;
-  const rows = data || [];
+  const el = document.getElementById('confession-list');
 
-  // Pending count badge
-  if (isAdmin) {
-    const { count } = await supabaseClient
-      .from('confessions').select('id', { count: 'exact', head: true }).eq('status', 'pending');
-    const badge = document.getElementById('pending-count-badge');
-    badge.textContent = count || 0;
-    badge.style.display = count > 0 ? 'inline-flex' : 'none';
-  }
+  if (!data?.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">💌</div><p>Belum ada confession</p></div>'; return; }
 
-  if (!rows.length) {
-    App.showEmpty('confession-container',
-      currentTab === 'pending' ? 'Tidak ada confession yang menunggu review.' : 'Belum ada confession yang tampil.');
-    return;
-  }
+  // Check user likes
+  const { data: userLikes } = await supabaseClient.from('confession_likes').select('confession_id').eq('user_id', user.id);
+  const likedIds = new Set((userLikes || []).map(l => l.confession_id));
 
-  container.innerHTML = `<div class="confession-wall">${rows.map(c => renderCard(c)).join('')}</div>`;
-}
+  const kategoriIcons = { confession: '💌', kritik: '📣', saran: '💡' };
 
-function renderCard(c) {
-  const adminActions = isAdmin ? `
-    <div class="confession-actions">
-      ${c.status === 'pending' ? `
-        <button class="btn btn-primary btn-sm" onclick="approveConfession('${c.id}')">✅ Approve</button>
-        <button class="btn btn-danger btn-sm" onclick="rejectConfession('${c.id}')">❌ Tolak</button>
-      ` : `
-        <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteConfession('${c.id}')">🗑️</button>
-      `}
-    </div>` : '';
-
-  const reactions = JSON.parse(c.reactions || '{}');
-
-  return `
-    <div class="confession-card ${c.status === 'pending' ? 'pending' : ''}" id="card-${c.id}">
-      <div>
-        <span class="confession-type-badge ${typeClass[c.type] || ''}">
-          ${typeEmoji[c.type] || '💬'} ${c.type}
-        </span>
-        ${c.status === 'pending' ? '<span class="badge" style="background:var(--warning-light);color:var(--warning);margin-left:4px;">Menunggu</span>' : ''}
-      </div>
-      <p class="confession-text">${escapeHtml(c.message)}</p>
-      ${c.status === 'approved' ? `
-        <div class="reaction-row">
-          ${['❤️','😂','😮','👍'].map(emoji => `
-            <button class="reaction-btn" onclick="react('${c.id}','${emoji}',this)">
-              ${emoji} <span>${reactions[emoji] || 0}</span>
-            </button>`).join('')}
-        </div>` : ''}
+  el.innerHTML = data.map(c => `
+    <div class="confession-card animate-slide">
+      <div style="margin-bottom:8px"><span class="badge ${c.kategori === 'confession' ? 'badge-admin' : c.kategori === 'kritik' ? 'badge-alpha' : 'badge-hadir'}">${kategoriIcons[c.kategori] || ''} ${c.kategori}</span></div>
+      <div class="confession-text">${App.filterBadWords(c.pesan)}</div>
       <div class="confession-meta">
-        <span>🕐 ${App.formatDate(c.created_at)}</span>
-        ${adminActions}
+        <span>${App.timeAgo(c.created_at)}</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="like-btn ${likedIds.has(c.id) ? 'liked' : ''}" onclick="toggleLike('${c.id}', ${likedIds.has(c.id)})">❤️ ${c.likes || 0}</button>
+          ${isAdmin && currentTab === 'pending' ? `
+            <button class="btn btn-success btn-sm" onclick="moderateConfession('${c.id}','approved')">✅ Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="moderateConfession('${c.id}','rejected')">❌ Reject</button>
+          ` : ''}
+          ${isAdmin ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteConfession('${c.id}')">🗑️</button>` : ''}
+        </div>
       </div>
-    </div>`;
+    </div>`).join('');
 }
+loadConfessions();
+document.getElementById('filter-kategori').addEventListener('change', loadConfessions);
 
-function escapeHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ── SEND ──────────────────────────────────────────────────────
+// Send
 document.getElementById('btn-send-confession').onclick = async () => {
-  const msg = textarea.value.trim();
-  if (!msg) { App.showToast('Tulis pesan terlebih dahulu.', 'error'); return; }
+  const pesan = document.getElementById('confession-text').value.trim();
+  const kategori = document.getElementById('confession-kategori').value;
+  if (!pesan) { App.showToast('Tulis pesan terlebih dahulu', 'error'); return; }
+  if (pesan.length < 5) { App.showToast('Pesan terlalu pendek', 'error'); return; }
 
   const { error } = await supabaseClient.from('confessions').insert({
-    type: selectedType, message: msg, status: 'pending', reactions: '{}'
+    pesan: App.filterBadWords(pesan),
+    kategori,
+    status: 'pending',
   });
-
-  if (error) { App.showToast('Gagal mengirim: ' + error.message, 'error'); return; }
-  App.showToast('Confession terkirim! Menunggu review admin.', 'success');
-  textarea.value = '';
-  document.getElementById('char-count').textContent = '0';
+  if (error) { App.showToast('Gagal: ' + error.message, 'error'); return; }
+  document.getElementById('confession-text').value = '';
+  App.showToast('Pesan terkirim! Menunggu moderasi admin.');
+  await App.addXP(user.id, 5, 'Kirim confession');
 };
 
-// ── ADMIN ACTIONS ─────────────────────────────────────────────
-window.approveConfession = async (id) => {
-  await supabaseClient.from('confessions').update({ status: 'approved' }).eq('id', id);
-  App.showToast('Confession disetujui!', 'success');
+// Like
+window.toggleLike = async (confessionId, isLiked) => {
+  if (isLiked) {
+    await supabaseClient.from('confession_likes').delete().eq('confession_id', confessionId).eq('user_id', user.id);
+    await supabaseClient.from('confessions').update({ likes: supabaseClient.rpc ? undefined : 0 }).eq('id', confessionId);
+    // Decrement
+    const { data: c } = await supabaseClient.from('confessions').select('likes').eq('id', confessionId).single();
+    await supabaseClient.from('confessions').update({ likes: Math.max(0, (c?.likes || 1) - 1) }).eq('id', confessionId);
+  } else {
+    await supabaseClient.from('confession_likes').insert({ confession_id: confessionId, user_id: user.id });
+    const { data: c } = await supabaseClient.from('confessions').select('likes').eq('id', confessionId).single();
+    await supabaseClient.from('confessions').update({ likes: (c?.likes || 0) + 1 }).eq('id', confessionId);
+  }
   loadConfessions();
 };
 
-window.rejectConfession = async (id) => {
-  const ok = await App.confirmDelete('Tolak dan hapus confession ini?');
-  if (!ok) return;
-  await supabaseClient.from('confessions').delete().eq('id', id);
-  App.showToast('Confession ditolak.', 'info');
+// Moderate
+window.moderateConfession = async (id, status) => {
+  await supabaseClient.from('confessions').update({ status }).eq('id', id);
+  App.showToast(`Confession ${status}`);
   loadConfessions();
 };
 
 window.deleteConfession = async (id) => {
-  const ok = await App.confirmDelete('Hapus confession ini dari publik?');
-  if (!ok) return;
+  if (!(await App.confirmDelete('Hapus confession ini?'))) return;
   await supabaseClient.from('confessions').delete().eq('id', id);
-  App.showToast('Confession dihapus.', 'success');
+  App.showToast('Confession dihapus');
   loadConfessions();
 };
-
-// ── REACTIONS ─────────────────────────────────────────────────
-window.react = async (id, emoji, btn) => {
-  const { data } = await supabaseClient.from('confessions').select('reactions').eq('id', id).single();
-  const reactions = JSON.parse(data?.reactions || '{}');
-  reactions[emoji] = (reactions[emoji] || 0) + 1;
-  await supabaseClient.from('confessions').update({ reactions: JSON.stringify(reactions) }).eq('id', id);
-  const span = btn.querySelector('span');
-  span.textContent = reactions[emoji];
-  btn.classList.add('reacted');
-};
-
-// ── TABS ──────────────────────────────────────────────────────
-document.getElementById('tab-approved-btn')?.addEventListener('click', () => {
-  currentTab = 'approved';
-  document.getElementById('tab-approved-btn').classList.add('active');
-  document.getElementById('tab-pending-btn').classList.remove('active');
-  loadConfessions();
-});
-
-document.getElementById('tab-pending-btn')?.addEventListener('click', () => {
-  currentTab = 'pending';
-  document.getElementById('tab-pending-btn').classList.add('active');
-  document.getElementById('tab-approved-btn').classList.remove('active');
-  loadConfessions();
-});
-
-document.getElementById('filter-type').onchange = loadConfessions;
-loadConfessions();
 </script>
 </body>
 </html>

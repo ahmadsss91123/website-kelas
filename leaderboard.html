@@ -5,181 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Leaderboard – Manajemen Kelas</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    .lb-tabs { display:flex; gap:2px; background:var(--surface-2); border-radius:var(--radius); padding:4px; border:1px solid var(--border); margin-bottom:24px; }
-    .lb-tab  { flex:1; padding:8px 16px; border:none; background:transparent; border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; color:var(--text-secondary); transition:all var(--transition); }
-    .lb-tab.active { background:var(--surface); color:var(--text-primary); box-shadow:var(--shadow-sm); }
-
-    .lb-podium {
-      display: flex; align-items: flex-end; justify-content: center;
-      gap: 12px; margin-bottom: 32px;
-    }
-    .podium-item {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      cursor: default;
-    }
-    .podium-avatar {
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-weight: 800; color: #fff; font-size: 1.2rem; position: relative;
-    }
-    .podium-avatar.rank-1 { width:72px; height:72px; background:linear-gradient(135deg,#F59E0B,#D97706); box-shadow:0 4px 20px rgba(245,158,11,.4); }
-    .podium-avatar.rank-2 { width:58px; height:58px; background:linear-gradient(135deg,#94A3B8,#64748B); }
-    .podium-avatar.rank-3 { width:52px; height:52px; background:linear-gradient(135deg,#CD7F32,#92400E); }
-    .podium-crown { position:absolute; top:-18px; font-size:1.4rem; }
-
-    .podium-block {
-      border-radius: var(--radius) var(--radius) 0 0;
-      width: 80px; display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; font-weight: 800; color: rgba(255,255,255,.8);
-    }
-    .podium-block.rank-1 { height:80px; background:linear-gradient(135deg,#F59E0B,#D97706); }
-    .podium-block.rank-2 { height:60px; background:linear-gradient(135deg,#94A3B8,#64748B); }
-    .podium-block.rank-3 { height:46px; background:linear-gradient(135deg,#CD7F32,#92400E); }
-
-    .podium-name { font-size:.8rem; font-weight:700; text-align:center; max-width:80px; }
-    .podium-score { font-size:.75rem; color:var(--text-muted); }
-
-    .lb-table-row {
-      display: grid;
-      grid-template-columns: 48px 1fr auto;
-      align-items: center; gap: 12px;
-      padding: 12px 16px;
-      border-radius: var(--radius);
-      transition: background var(--transition);
-    }
-    .lb-table-row:hover { background: var(--surface-2); }
-    .lb-table-row + .lb-table-row { border-top: 1px solid var(--border); }
-
-    .rank-badge {
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: .9rem;
-    }
-    .rank-gold   { background: #FEF3C7; color: #D97706; }
-    .rank-silver { background: #F1F5F9; color: #475569; }
-    .rank-bronze { background: #FEF9E7; color: #92400E; }
-    .rank-normal { background: var(--surface-2); color: var(--text-secondary); }
-
-    .lb-student-name { font-weight: 600; font-size: .9rem; }
-    .lb-student-sub  { font-size: .75rem; color: var(--text-muted); margin-top: 2px; }
-
-    .xp-bar-wrap {
-      background: var(--surface-2); border-radius: 10px;
-      height: 6px; width: 120px; overflow: hidden;
-    }
-    .xp-bar { height: 100%; border-radius: 10px; background: var(--accent); transition: width .5s ease; }
-
-    /* ACHIEVEMENTS */
-    .achievements-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 12px;
-    }
-    .achievement-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 16px;
-      text-align: center;
-      transition: transform var(--transition);
-    }
-    .achievement-card:hover { transform: translateY(-2px); }
-    .achievement-card.locked { opacity: .45; filter: grayscale(1); }
-
-    .ach-icon { font-size: 2rem; margin-bottom: 8px; }
-    .ach-name { font-weight: 700; font-size: .88rem; margin-bottom: 4px; }
-    .ach-desc { font-size: .75rem; color: var(--text-secondary); }
-    .ach-count {
-      display: inline-flex; align-items: center; justify-content: center;
-      background: var(--accent-light); color: var(--accent);
-      font-size: .7rem; font-weight: 700;
-      padding: 2px 8px; border-radius: 10px; margin-top: 6px;
-    }
-
-    .student-select-wrap { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
-
-    .level-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-size: .75rem; font-weight: 700;
-      padding: 3px 10px; border-radius: 20px;
-    }
-    .level-1 { background: var(--surface-2); color: var(--text-secondary); }
-    .level-2 { background: var(--success-light); color: var(--success); }
-      .level-3 { background: var(--info-light); color: var(--info); }
-    .level-4 { background: var(--warning-light); color: var(--warning); }
-    .level-5 { background: #F3EEFF; color: #6B21A8; }
-  </style>
 </head>
 <body>
 <div class="app-layout">
-  <aside id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-brand">
-        <div class="brand-icon">🎓</div>
-        <div><div class="brand-name">ManajemenKelas</div><div class="brand-sub">Sistem Informasi</div></div>
-      </div>
-      <div class="sidebar-user">
-        <div class="user-avatar" id="sidebar-avatar">A</div>
-        <div class="user-info"><div id="sidebar-name">Loading…</div><div id="sidebar-role"></div></div>
-      </div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Menu Utama</div>
-      <a class="nav-link" href="index.html" data-page="index.html" data-role-access="admin"><span class="nav-icon">📊</span> Dashboard</a>
-      <a class="nav-link" href="kas.html" data-page="kas.html" data-role-access="admin,pengurus_kas"><span class="nav-icon">💰</span> Kas Kelas</a>
-      <a class="nav-link" href="absensi.html" data-page="absensi.html" data-role-access="admin,pengurus_absensi"><span class="nav-icon">📋</span> Absensi</a>
-      <a class="nav-link" href="laporan.html" data-page="laporan.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📈</span> Laporan</a>
-      <div class="nav-section-label">Sosial & Akademik</div>
-      <a class="nav-link" href="confession.html" data-page="confession.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">💬</span> Confession</a>
-      <a class="nav-link" href="memories.html" data-page="memories.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📸</span> Memories</a>
-      <a class="nav-link" href="leaderboard.html" data-page="leaderboard.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">🏆</span> Leaderboard</a>
-      <a class="nav-link" href="jadwal.html" data-page="jadwal.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📅</span> Jadwal</a>
-      <a class="nav-link" href="tugas.html" data-page="tugas.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📝</span> Tugas</a>
-      <a class="nav-link" href="materi.html" data-page="materi.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📚</span> Bank Materi</a>
-      <div class="nav-section-label">Admin</div>
-      <a class="nav-link" href="index.html" data-role-access="admin"><span class="nav-icon">👥</span> Kelola Akun</a>
-    </nav>
-    <div class="sidebar-footer"><button id="logout-btn">🚪 Logout</button></div>
-  </aside>
-  <div id="sidebar-overlay"></div>
-
   <div class="main-content">
     <header class="navbar">
       <button id="sidebar-toggle">☰</button>
-      <h2 class="navbar-title">🏆 Leaderboard & Gamifikasi</h2>
+      <h2 class="navbar-title">🏆 Leaderboard</h2>
     </header>
-
     <main class="page-content">
-      <!-- STATS -->
-      <div class="stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card">
-          <div class="stat-icon orange">⭐</div>
-          <div><div class="stat-value" id="lb-top-xp">–</div><div class="stat-label">XP Tertinggi</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon green">✅</div>
-          <div><div class="stat-value" id="lb-top-hadir">–</div><div class="stat-label">Paling Rajin</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon blue">💰</div>
-          <div><div class="stat-value" id="lb-top-kas">–</div><div class="stat-label">Pembayar Terbanyak</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon purple">🎖️</div>
-          <div><div class="stat-value" id="lb-total-ach">–</div><div class="stat-label">Total Achievement</div></div>
-        </div>
+      <div class="page-header">
+        <h1>Leaderboard Keaktifan</h1>
+        <p>Peringkat berdasarkan keaktifan dan kontribusi, bukan nilai akademik</p>
       </div>
 
-      <div class="lb-tabs">
-        <button class="lb-tab active" data-tab="kehadiran">✅ Kehadiran</button>
-        <button class="lb-tab" data-tab="kas">💰 Kas</button>
-        <button class="lb-tab" data-tab="xp">⭐ XP & Level</button>
-        <button class="lb-tab" data-tab="achievement">🎖️ Achievement</button>
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="xp">⭐ XP Tertinggi</button>
+        <button class="tab" data-tab="streak">🔥 Streak Terpanjang</button>
+        <button class="tab" data-tab="hadir">📋 Kehadiran</button>
       </div>
 
-      <div id="lb-content">
-        <div class="loading-state"><div class="spinner"></div><p>Menghitung ranking…</p></div>
+      <!-- Top 3 -->
+      <div id="top3" style="display:flex;gap:16px;justify-content:center;margin-bottom:32px;flex-wrap:wrap">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Full Leaderboard -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Peringkat Lengkap</h3>
+        </div>
+        <div class="leaderboard-list" id="leaderboard-list">
+          <div class="loading-state"><div class="spinner"></div></div>
+        </div>
       </div>
     </main>
   </div>
@@ -190,284 +49,66 @@
 import './app.js';
 import { supabaseClient } from './supabase.js';
 
-await App.requireAuth(['admin','pengurus_kas','pengurus_absensi','pengunjung']);
+const user = await App.requireAuth();
+if (!user) throw new Error('No access');
 
-let currentTab = 'kehadiran';
+let currentTab = 'xp';
 
-// ── DATA FETCH ────────────────────────────────────────────────
-async function getAllData() {
-  const [studentsRes, absRes, kasRes] = await Promise.all([
-    supabaseClient.from('students').select('id,nama').order('nama'),
-    supabaseClient.from('attendances').select('student_id,status'),
-    supabaseClient.from('cash_payments').select('student_id,nominal'),
-  ]);
-
-  const students = studentsRes.data || [];
-  const absAll   = absRes.data || [];
-  const kasAll   = kasRes.data || [];
-
-  // Build stats per student
-  const stats = students.map(s => {
-    const abs = absAll.filter(a => a.student_id === s.id);
-    const kas = kasAll.filter(k => k.student_id === s.id);
-
-    const hadir  = abs.filter(a => a.status === 'Hadir').length;
-    const izin   = abs.filter(a => a.status === 'Izin').length;
-    const sakit  = abs.filter(a => a.status === 'Sakit').length;
-    const alpha  = abs.filter(a => a.status === 'Alpha').length;
-    const totalAbs = abs.length;
-    const hadirPct = totalAbs > 0 ? Math.round(hadir / totalAbs * 100) : 0;
-
-    const totalKas    = kas.reduce((s, k) => s + Number(k.nominal), 0);
-    const kasCount    = kas.length;
-
-    // XP System
-    const xp = hadir * 5 + kasCount * 10 + (alpha === 0 && hadir > 0 ? 50 : 0);
-    const level = xp < 50 ? 1 : xp < 150 ? 2 : xp < 300 ? 3 : xp < 500 ? 4 : 5;
-
-    // Achievements
-    const achievements = [];
-    if (alpha === 0 && hadir > 0)  achievements.push({ icon:'🏅', name:'Tidak Pernah Alpha', key:'no_alpha' });
-    if (hadir >= 20)               achievements.push({ icon:'⭐', name:'Perfect Attendance', key:'perfect_20' });
-    if (kasCount >= 5)             achievements.push({ icon:'💎', name:'Pembayar Setia', key:'kas_5' });
-    if (kasCount >= 1)             achievements.push({ icon:'💰', name:'Pembayar Kas', key:'kas_1' });
-    if (izin > sakit + alpha)      achievements.push({ icon:'📝', name:'Raja Izin', key:'raja_izin' });
-    if (hadir >= 10)               achievements.push({ icon:'🌟', name:'Rajin Hadir', key:'hadir_10' });
-    if (xp >= 100)                 achievements.push({ icon:'🚀', name:'Rising Star', key:'rising_star' });
-    if (level === 5)               achievements.push({ icon:'👑', name:'Legenda Kelas', key:'legend' });
-
-    return { ...s, hadir, izin, sakit, alpha, hadirPct, totalKas, kasCount, xp, level, achievements };
-  });
-
-  return stats;
-}
-
-// ── LEVEL INFO ────────────────────────────────────────────────
-const levelInfo = {
-  1: { name:'Pemula', class:'level-1', icon:'🌱', max:50 },
-  2: { name:'Aktif',  class:'level-2', icon:'⚡', max:150 },
-  3: { name:'Semangat',class:'level-3',icon:'🔥', max:300 },
-  4: { name:'Berprestasi',class:'level-4',icon:'💫', max:500 },
-  5: { name:'Legenda', class:'level-5', icon:'👑', max:999 },
-};
-
-function getLevelBadge(level) {
-  const l = levelInfo[level] || levelInfo[1];
-  return `<span class="level-badge ${l.class}">${l.icon} ${l.name}</span>`;
-}
-
-function getRankClass(rank) {
-  return rank === 1 ? 'rank-gold' : rank === 2 ? 'rank-silver' : rank === 3 ? 'rank-bronze' : 'rank-normal';
-}
-
-// ── RENDER PODIUM ──────────────────────────────────────────────
-function renderPodium(top3, scoreKey, scoreLabel) {
-  if (top3.length < 1) return '';
-  const [first, second, third] = top3;
-
-  function pItem(s, rank, offset) {
-    if (!s) return `<div class="podium-item" style="visibility:hidden"><div style="height:${offset}px"></div></div>`;
-    const initial = s.nama[0].toUpperCase();
-    return `
-      <div class="podium-item">
-        <div class="podium-avatar rank-${rank}">
-          ${rank === 1 ? '<span class="podium-crown">👑</span>' : ''}
-          ${initial}
-        </div>
-        <div class="podium-name">${s.nama.split(' ')[0]}</div>
-        <div class="podium-score">${scoreLabel(s)}</div>
-        <div class="podium-block rank-${rank}">${rank}</div>
-      </div>`;
-  }
-
-  return `
-    <div class="lb-podium">
-      ${pItem(second, 2, 0)}
-      ${pItem(first,  1, 0)}
-      ${pItem(third,  3, 0)}
-    </div>`;
-}
-
-// ── RENDER TABLE ──────────────────────────────────────────────
-function renderTable(sorted, rowFn) {
-  return sorted.map((s, i) => {
-    const rank = i + 1;
-    return `
-      <div class="lb-table-row">
-        <div class="rank-badge ${getRankClass(rank)}">${rank}</div>
-        <div>
-          <div class="lb-student-name">${s.nama}</div>
-          <div class="lb-student-sub">${rowFn.sub(s)}</div>
-        </div>
-        <div style="text-align:right">${rowFn.right(s)}</div>
-      </div>`;
-  }).join('');
-}
-
-// ── MAIN RENDER ───────────────────────────────────────────────
-async function render() {
-  const container = document.getElementById('lb-content');
-  container.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Menghitung…</p></div>';
-
-  const stats = await getAllData();
-
-  // Update summary stats
-  const topXP    = [...stats].sort((a,b)=>b.xp-a.xp)[0];
-  const topHadir = [...stats].sort((a,b)=>b.hadir-a.hadir)[0];
-  const topKas   = [...stats].sort((a,b)=>b.totalKas-a.totalKas)[0];
-  const totalAch = stats.reduce((s,st) => s + st.achievements.length, 0);
-
-  document.getElementById('lb-top-xp').textContent    = topXP    ? `${topXP.xp} XP` : '–';
-  document.getElementById('lb-top-hadir').textContent = topHadir ? topHadir.nama.split(' ')[0] : '–';
-  document.getElementById('lb-top-kas').textContent   = topKas   ? topKas.nama.split(' ')[0] : '–';
-  document.getElementById('lb-total-ach').textContent = totalAch;
-
-  if (currentTab === 'kehadiran') renderKehadiran(stats, container);
-  else if (currentTab === 'kas') renderKas(stats, container);
-  else if (currentTab === 'xp')  renderXP(stats, container);
-  else if (currentTab === 'achievement') renderAchievement(stats, container);
-}
-
-function renderKehadiran(stats, container) {
-  const sorted = [...stats].sort((a,b) => b.hadir - a.hadir || a.alpha - b.alpha);
-  const top3   = sorted.slice(0,3);
-
-  container.innerHTML = `
-    ${renderPodium(top3, 'hadir', s => `${s.hadir} hari hadir`)}
-    <div class="card">
-      <div class="card-header"><h3 class="card-title">📊 Ranking Kehadiran</h3></div>
-      ${renderTable(sorted, {
-        sub: s => `Hadir: ${s.hadir} | Izin: ${s.izin} | Sakit: ${s.sakit} | Alpha: ${s.alpha}`,
-        right: s => `
-          <div style="font-weight:700;color:var(--accent);font-size:1rem">${s.hadirPct}%</div>
-          <div style="font-size:.72rem;color:var(--text-muted)">${s.hadir} hari</div>
-        `
-      })}
-    </div>`;
-}
-
-function renderKas(stats, container) {
-  const sorted = [...stats].sort((a,b) => b.totalKas - a.totalKas);
-  const top3   = sorted.slice(0,3);
-
-  container.innerHTML = `
-    ${renderPodium(top3, 'totalKas', s => App.formatCurrency(s.totalKas))}
-    <div class="card">
-      <div class="card-header"><h3 class="card-title">💰 Ranking Kas</h3></div>
-      ${renderTable(sorted, {
-        sub: s => `${s.kasCount} kali bayar`,
-        right: s => `
-          <div style="font-weight:700;color:var(--accent)">${App.formatCurrency(s.totalKas)}</div>
-        `
-      })}
-    </div>`;
-}
-
-function renderXP(stats, container) {
-  const sorted = [...stats].sort((a,b) => b.xp - a.xp);
-  const maxXP  = sorted[0]?.xp || 1;
-
-  container.innerHTML = `
-    <div class="card" style="margin-bottom:20px;">
-      <div class="card-header"><h3 class="card-title">ℹ️ Cara Mendapatkan XP</h3></div>
-      <div style="display:flex;flex-wrap:wrap;gap:12px;">
-        <span class="badge badge-hadir">✅ Hadir = +5 XP</span>
-        <span class="badge badge-kas">💰 Bayar Kas = +10 XP</span>
-        <span class="badge" style="background:#F3EEFF;color:#6B21A8">🏅 Nol Alpha = +50 XP Bonus</span>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header"><h3 class="card-title">⭐ Ranking XP & Level</h3></div>
-      ${sorted.map((s, i) => {
-        const pct = Math.round(s.xp / maxXP * 100);
-        return `
-          <div class="lb-table-row">
-            <div class="rank-badge ${getRankClass(i+1)}">${i+1}</div>
-            <div style="flex:1">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                <span class="lb-student-name">${s.nama}</span>
-                ${getLevelBadge(s.level)}
-              </div>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <div class="xp-bar-wrap">
-                  <div class="xp-bar" style="width:${pct}%"></div>
-                </div>
-                <span style="font-size:.75rem;color:var(--text-muted)">${s.xp} XP</span>
-              </div>
-            </div>
-          </div>`;
-      }).join('')}
-    </div>`;
-}
-
-function renderAchievement(stats, container) {
-  const allBadges = [
-    { icon:'🏅', name:'Tidak Pernah Alpha',  key:'no_alpha',    desc:'Tidak punya satu pun catatan Alpha' },
-    { icon:'⭐', name:'Perfect Attendance',  key:'perfect_20',  desc:'Hadir minimal 20 hari' },
-    { icon:'💎', name:'Pembayar Setia',       key:'kas_5',       desc:'Bayar kas minimal 5 kali' },
-    { icon:'💰', name:'Pembayar Kas',         key:'kas_1',       desc:'Pertama kali bayar kas' },
-    { icon:'📝', name:'Raja Izin',            key:'raja_izin',   desc:'Izin lebih banyak dari alpha + sakit' },
-    { icon:'🌟', name:'Rajin Hadir',          key:'hadir_10',    desc:'Hadir minimal 10 hari' },
-    { icon:'🚀', name:'Rising Star',          key:'rising_star', desc:'Mencapai 100 XP' },
-    { icon:'👑', name:'Legenda Kelas',        key:'legend',      desc:'Mencapai Level 5' },
-  ];
-
-  // Count who has each badge
-  const badgeCounts = {};
-  stats.forEach(s => s.achievements.forEach(a => {
-    badgeCounts[a.key] = (badgeCounts[a.key] || 0) + 1;
-  }));
-
-  // Per-student view
-  const studentRows = stats
-    .filter(s => s.achievements.length > 0)
-    .sort((a,b) => b.achievements.length - a.achievements.length);
-
-  container.innerHTML = `
-    <div class="card" style="margin-bottom:20px;">
-      <div class="card-header"><h3 class="card-title">🎖️ Semua Badge</h3></div>
-      <div class="achievements-grid">
-        ${allBadges.map(b => `
-          <div class="achievement-card ${(badgeCounts[b.key] || 0) === 0 ? 'locked' : ''}">
-            <div class="ach-icon">${b.icon}</div>
-            <div class="ach-name">${b.name}</div>
-            <div class="ach-desc">${b.desc}</div>
-            <div class="ach-count">${badgeCounts[b.key] || 0} siswa</div>
-          </div>`).join('')}
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header"><h3 class="card-title">🏆 Koleksi Badge Siswa</h3></div>
-      ${studentRows.length === 0
-        ? '<div class="empty-state"><div class="empty-icon">🎖️</div><p>Belum ada achievement. Mulai catat absensi dan kas!</p></div>'
-        : studentRows.map(s => `
-        <div class="lb-table-row">
-          <div class="rank-badge rank-normal">${s.achievements.length}</div>
-          <div>
-            <div class="lb-student-name">${s.nama}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
-              ${s.achievements.map(a => `
-                <span title="${a.name}" style="font-size:1.3rem;cursor:default">${a.icon}</span>
-              `).join('')}
-            </div>
-          </div>
-          <div>${getLevelBadge(s.level)}</div>
-        </div>`).join('')}
-    </div>`;
-}
-
-// ── TABS ──────────────────────────────────────────────────────
-document.querySelectorAll('.lb-tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentTab = btn.dataset.tab;
-    render();
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    loadLeaderboard();
   });
 });
 
-render();
+async function loadLeaderboard() {
+  let orderBy = 'xp';
+  let label = 'XP';
+  if (currentTab === 'streak') { orderBy = 'streak_login'; label = 'Streak'; }
+  else if (currentTab === 'hadir') { orderBy = 'streak_hadir'; label = 'Kehadiran'; }
+
+  const { data } = await supabaseClient.from('profiles').select('*').order(orderBy, { ascending: false });
+  if (!data?.length) return;
+
+  // Top 3
+  const top3El = document.getElementById('top3');
+  const top3 = data.slice(0, 3);
+  const medals = ['🥇', '🥈', '🥉'];
+  const sizes = ['100px', '85px', '75px'];
+
+  top3El.innerHTML = top3.map((p, i) => {
+    const value = currentTab === 'xp' ? `${p.xp || 0} XP` : currentTab === 'streak' ? `${p.streak_login || 0} hari` : `${p.streak_hadir || 0}`;
+    return `<div style="text-align:center;${i === 0 ? 'order:1' : i === 1 ? 'order:0' : 'order:2'}">
+      <div style="font-size:2rem;margin-bottom:8px">${medals[i]}</div>
+      <div style="width:${sizes[i]};height:${sizes[i]};border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;margin:0 auto 8px">
+        ${(p.full_name || 'U')[0].toUpperCase()}
+      </div>
+      <div style="font-weight:600;font-size:.9rem">${p.full_name || p.email}</div>
+      <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--accent)">${value}</div>
+      <div style="font-size:.72rem;color:var(--text-muted)">Level ${p.level || 1} ${App.getLevelBadge(p.level || 1)}</div>
+    </div>`;
+  }).join('');
+
+  // Full list
+  const listEl = document.getElementById('leaderboard-list');
+  listEl.innerHTML = data.map((p, i) => {
+    const value = currentTab === 'xp' ? `${p.xp || 0} XP` : currentTab === 'streak' ? `${p.streak_login || 0} hari` : `${p.streak_hadir || 0}`;
+    const topClass = i === 0 ? 'top-1' : i === 1 ? 'top-2' : i === 2 ? 'top-3' : '';
+    const isMe = p.id === user.id;
+    return `<div class="leaderboard-item ${topClass} animate-slide" ${isMe ? 'style="background:var(--accent-light)"' : ''}>
+      <div class="lb-rank">#${i + 1}</div>
+      <div class="lb-avatar">${(p.full_name || 'U')[0].toUpperCase()}</div>
+      <div class="lb-info">
+        <div class="lb-name">${p.full_name || p.email}${isMe ? ' (Kamu)' : ''}</div>
+        <div class="lb-detail">Level ${p.level || 1} ${App.getLevelBadge(p.level || 1)} • Streak: ${p.streak_login || 0} hari</div>
+      </div>
+      <div class="lb-xp">${value}</div>
+    </div>`;
+  }).join('');
+}
+loadLeaderboard();
 </script>
 </body>
 </html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bank Materi – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .materi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+    .materi-card {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius-lg); overflow:hidden;
+      box-shadow:var(--shadow-sm); transition:transform var(--transition),box-shadow var(--transition);
+      display:flex; flex-direction:column;
+    }
+    .materi-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); }
+
+    .materi-type-bar { height:4px; width:100%; }
+    .type-pdf    { background:#E74C3C; }
+    .type-doc    { background:#2980B9; }
+    .type-rangkuman { background:var(--accent); }
+    .type-catatan   { background:var(--warning); }
+    .type-kisi      { background:#8E44AD; }
+    .type-link      { background:var(--info); }
+    .type-lainnya   { background:var(--text-muted); }
+
+    .materi-header { padding:16px 18px 10px; }
+    .materi-type-badge {
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:.7rem; font-weight:700; padding:3px 10px;
+      border-radius:20px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;
+    }
+    .badge-pdf     { background:#FDEDEC; color:#E74C3C; }
+    .badge-doc     { background:#EBF5FB; color:#2980B9; }
+    .badge-rangkuman{background:var(--accent-light); color:var(--accent); }
+    .badge-catatan { background:var(--warning-light); color:var(--warning); }
+    .badge-kisi    { background:#F3EEFF; color:#8E44AD; }
+    .badge-link    { background:var(--info-light); color:var(--info); }
+    .badge-lainnya { background:var(--surface-2); color:var(--text-secondary); }
+
+    .materi-mapel  { font-size:.75rem; color:var(--text-muted); margin-bottom:4px; }
+    .materi-judul  { font-weight:700; font-size:.95rem; line-height:1.4; }
+    .materi-body   { padding:0 18px 14px; flex:1; }
+    .materi-desc   { font-size:.83rem; color:var(--text-secondary); line-height:1.6; margin-bottom:10px; }
+
+    .materi-footer {
+      padding:10px 18px; border-top:1px solid var(--border);
+      background:var(--surface-2);
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+    }
+    .materi-meta { font-size:.75rem; color:var(--text-muted); }
+    .materi-actions { display:flex; gap:6px; }
+
+    .download-btn {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:6px 14px; border-radius:var(--radius);
+      background:var(--accent); color:#fff;
+      font-size:.8rem; font-weight:600;
+      border:none; cursor:pointer; transition:all var(--transition);
+      text-decoration:none;
+    }
+    .download-btn:hover { background:var(--accent-hover); }
+
+    .mapel-sidebar { 
+      display:flex; flex-direction:column; gap:4px; margin-bottom:20px;
+    }
+    .mapel-sidebar-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:8px 12px; border-radius:var(--radius);
+      cursor:pointer; font-size:.85rem; font-weight:500;
+      transition:all var(--transition); border:1.5px solid transparent;
+    }
+    .mapel-sidebar-item:hover { background:var(--surface-2); }
+    .mapel-sidebar-item.active { background:var(--accent-light); border-color:var(--accent); color:var(--accent); font-weight:700; }
+    .mapel-count { font-size:.72rem; color:var(--text-muted); }
+
+    .search-row { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🎓</div>
+        <div><div class="brand-name">ManajemenKelas</div><div class="brand-sub">Sistem Informasi</div></div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info"><div id="sidebar-name">Loading…</div><div id="sidebar-role"></div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-link" href="index.html" data-page="index.html" data-role-access="admin"><span class="nav-icon">📊</span> Dashboard</a>
+      <a class="nav-link" href="kas.html" data-page="kas.html" data-role-access="admin,pengurus_kas"><span class="nav-icon">💰</span> Kas Kelas</a>
+      <a class="nav-link" href="absensi.html" data-page="absensi.html" data-role-access="admin,pengurus_absensi"><span class="nav-icon">📋</span> Absensi</a>
+      <a class="nav-link" href="laporan.html" data-page="laporan.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📈</span> Laporan</a>
+      <div class="nav-section-label">Sosial & Akademik</div>
+      <a class="nav-link" href="confession.html" data-page="confession.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">💬</span> Confession</a>
+      <a class="nav-link" href="memories.html" data-page="memories.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📸</span> Memories</a>
+      <a class="nav-link" href="leaderboard.html" data-page="leaderboard.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">🏆</span> Leaderboard</a>
+      <a class="nav-link" href="jadwal.html" data-page="jadwal.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📅</span> Jadwal</a>
+      <a class="nav-link" href="tugas.html" data-page="tugas.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📝</span> Tugas</a>
+      <a class="nav-link" href="materi.html" data-page="materi.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📚</span> Bank Materi</a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-link" href="index.html" data-role-access="admin"><span class="nav-icon">👥</span> Kelola Akun</a>
+    </nav>
+    <div class="sidebar-footer"><button id="logout-btn">🚪 Logout</button></div>
+  </aside>
+  <div id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">📚 Bank Materi</h2>
+      <div class="navbar-right">
+        <button class="btn btn-primary btn-sm" id="btn-add-materi">+ Upload Materi</button>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <!-- STATS -->
+      <div class="stats-grid" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div class="stat-icon blue">📚</div>
+          <div><div class="stat-value" id="stat-total-materi">–</div><div class="stat-label">Total Materi</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">📖</div>
+          <div><div class="stat-value" id="stat-total-mapel">–</div><div class="stat-label">Mata Pelajaran</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">📄</div>
+          <div><div class="stat-value" id="stat-kisi">–</div><div class="stat-label">Kisi-Kisi</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">📝</div>
+          <div><div class="stat-value" id="stat-rangkuman">–</div><div class="stat-label">Rangkuman</div></div>
+        </div>
+      </div>
+
+      <!-- SEARCH & FILTER -->
+      <div class="search-row">
+        <input type="text" class="filter-control" id="search-materi"
+               placeholder="🔍 Cari materi, mapel, atau judul…" style="flex:1;max-width:360px;" />
+        <select class="filter-control" id="filter-type">
+          <option value="">Semua Tipe</option>
+          <option value="pdf">📄 PDF</option>
+          <option value="doc">📝 Doc</option>
+          <option value="rangkuman">📖 Rangkuman</option>
+          <option value="catatan">✏️ Catatan</option>
+          <option value="kisi">🎯 Kisi-Kisi</option>
+          <option value="link">🔗 Link</option>
+          <option value="lainnya">📌 Lainnya</option>
+        </select>
+      </div>
+
+      <!-- MAPEL FILTER TAGS -->
+      <div id="mapel-tags" class="mapel-sidebar"></div>
+
+      <!-- GRID -->
+      <div id="materi-container">
+        <div class="loading-state"><div class="spinner"></div><p>Memuat materi…</p></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL MATERI -->
+<div class="modal-overlay" id="modal-materi">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-materi-title">Upload Materi</h3>
+      <button class="modal-close" id="modal-materi-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="materi-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mata Pelajaran</label>
+          <input class="form-control" type="text" id="materi-mapel" placeholder="Matematika" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipe</label>
+          <select class="form-control" id="materi-type">
+            <option value="pdf">📄 PDF</option>
+            <option value="doc">📝 Doc</option>
+            <option value="rangkuman">📖 Rangkuman</option>
+            <option value="catatan">✏️ Catatan</option>
+            <option value="kisi">🎯 Kisi-Kisi</option>
+            <option value="link">🔗 Link</option>
+            <option value="lainnya">📌 Lainnya</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Judul Materi</label>
+        <input class="form-control" type="text" id="materi-judul" placeholder="Rangkuman Limit Kalkulus…" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deskripsi (opsional)</label>
+        <textarea class="form-control" id="materi-desc" rows="2"
+          placeholder="Cocok untuk ujian bab 3, berisi rumus-rumus penting…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL / Link File</label>
+        <input class="form-control" type="url" id="materi-url"
+               placeholder="https://drive.google.com/… atau link apapun" />
+        <p style="font-size:.75rem;color:var(--text-muted);margin-top:4px;">
+          ℹ️ Upload file ke Google Drive / Dropbox, lalu paste link share-nya di sini.
+        </p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tag (opsional, pisah dengan koma)</label>
+        <input class="form-control" type="text" id="materi-tags" placeholder="ujian, bab3, penting" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-materi-cancel">Batal</button>
+      <button class="btn btn-primary" id="modal-materi-save">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth(['admin','pengurus_kas','pengurus_absensi','pengunjung']);
+if (!user) throw new Error('No access');
+const isAdmin = user.profile?.role === 'admin';
+
+const uploaderName = user.profile?.full_name || user.email || 'Anonim';
+
+const typeIcons = {
+  pdf:'📄', doc:'📝', rangkuman:'📖', catatan:'✏️', kisi:'🎯', link:'🔗', lainnya:'📌'
+};
+
+let activeMapel = '';
+
+// ── LOAD MATERI ───────────────────────────────────────────────
+async function loadMateri() {
+  const search    = document.getElementById('search-materi').value.trim().toLowerCase();
+  const typeFilter= document.getElementById('filter-type').value;
+
+  const { data } = await supabaseClient
+    .from('materials').select('*').order('mata_pelajaran').order('created_at', { ascending: false });
+
+  let rows = data || [];
+
+  // Stats
+  const mapels = [...new Set(rows.map(r => r.mata_pelajaran))];
+  document.getElementById('stat-total-materi').textContent = rows.length;
+  document.getElementById('stat-total-mapel').textContent  = mapels.length;
+  document.getElementById('stat-kisi').textContent         = rows.filter(r => r.tipe === 'kisi').length;
+  document.getElementById('stat-rangkuman').textContent    = rows.filter(r => r.tipe === 'rangkuman').length;
+
+  // Mapel tags
+  const tagsEl = document.getElementById('mapel-tags');
+  tagsEl.innerHTML = ['', ...mapels].map(m => `
+    <div class="mapel-sidebar-item ${activeMapel === m ? 'active' : ''}" data-mapel="${m}">
+      <span>${m || '🌟 Semua Mapel'}</span>
+      <span class="mapel-count">${m ? rows.filter(r => r.mata_pelajaran === m).length : rows.length}</span>
+    </div>`).join('');
+  tagsEl.querySelectorAll('.mapel-sidebar-item').forEach(el => {
+    el.addEventListener('click', () => {
+      activeMapel = el.dataset.mapel;
+      loadMateri();
+    });
+  });
+
+  // Filters
+  if (activeMapel) rows = rows.filter(r => r.mata_pelajaran === activeMapel);
+  if (typeFilter)  rows = rows.filter(r => r.tipe === typeFilter);
+  if (search)      rows = rows.filter(r =>
+    r.judul?.toLowerCase().includes(search) ||
+    r.mata_pelajaran?.toLowerCase().includes(search) ||
+    r.deskripsi?.toLowerCase().includes(search) ||
+    r.tags?.toLowerCase().includes(search));
+
+  if (!rows.length) { App.showEmpty('materi-container', 'Tidak ada materi yang ditemukan.'); return; }
+
+  document.getElementById('materi-container').innerHTML =
+    `<div class="materi-grid">${rows.map(m => renderMateri(m)).join('')}</div>`;
+}
+
+function renderMateri(m) {
+  const badgeClass = `badge-${m.tipe || 'lainnya'}`;
+  const barClass   = `type-${m.tipe || 'lainnya'}`;
+  const icon       = typeIcons[m.tipe] || '📌';
+  const tags = m.tags ? m.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+  const adminBtns = isAdmin ? `
+    <button class="btn btn-ghost btn-sm" onclick='openEditMateri(${JSON.stringify(m).replace(/'/g,"&#39;")})'>✏️</button>
+    <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteMateri('${m.id}')">🗑️</button>
+  ` : '';
+
+  return `
+    <div class="materi-card">
+      <div class="materi-type-bar ${barClass}"></div>
+      <div class="materi-header">
+        <span class="materi-type-badge ${badgeClass}">${icon} ${m.tipe || 'lainnya'}</span>
+        <div class="materi-mapel">📚 ${m.mata_pelajaran}</div>
+        <div class="materi-judul">${m.judul}</div>
+      </div>
+      <div class="materi-body">
+        ${m.deskripsi ? `<div class="materi-desc">${m.deskripsi}</div>` : ''}
+        ${tags.length ? `
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">
+            ${tags.map(t => `<span class="badge" style="background:var(--surface-2);color:var(--text-secondary)">🏷️ ${t}</span>`).join('')}
+          </div>` : ''}
+        ${m.file_url ? `
+          <a class="download-btn" href="${m.file_url}" target="_blank" rel="noopener">
+            ${m.tipe === 'link' ? '🔗 Buka Link' : '⬇️ Download / Buka'}
+          </a>` : `<span style="font-size:.8rem;color:var(--text-muted)">Tidak ada link</span>`}
+      </div>
+      <div class="materi-footer">
+        <div class="materi-meta">
+          👤 ${m.uploaded_by || 'Anonim'} · ${App.formatDate(m.created_at)}
+        </div>
+        <div class="materi-actions">${adminBtns}</div>
+      </div>
+    </div>`;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+const modal = document.getElementById('modal-materi');
+document.getElementById('btn-add-materi').onclick       = () => modal.classList.add('show');
+document.getElementById('modal-materi-close').onclick   = closeModal;
+document.getElementById('modal-materi-cancel').onclick  = closeModal;
+
+function closeModal() {
+  modal.classList.remove('show');
+  ['materi-id','materi-mapel','materi-judul','materi-desc','materi-url','materi-tags']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('materi-type').value = 'pdf';
+  document.getElementById('modal-materi-title').textContent = 'Upload Materi';
+}
+
+window.openEditMateri = (m) => {
+  document.getElementById('materi-id').value    = m.id;
+  document.getElementById('materi-mapel').value = m.mata_pelajaran;
+  document.getElementById('materi-type').value  = m.tipe;
+  document.getElementById('materi-judul').value = m.judul;
+  document.getElementById('materi-desc').value  = m.deskripsi || '';
+  document.getElementById('materi-url').value   = m.file_url || '';
+  document.getElementById('materi-tags').value  = m.tags || '';
+  document.getElementById('modal-materi-title').textContent = 'Edit Materi';
+  modal.classList.add('show');
+};
+
+document.getElementById('modal-materi-save').onclick = async () => {
+  const id    = document.getElementById('materi-id').value;
+  const mapel = document.getElementById('materi-mapel').value.trim();
+  const tipe  = document.getElementById('materi-type').value;
+  const judul = document.getElementById('materi-judul').value.trim();
+  const desc  = document.getElementById('materi-desc').value.trim();
+  const url   = document.getElementById('materi-url').value.trim();
+  const tags  = document.getElementById('materi-tags').value.trim();
+
+  if (!mapel || !judul) { App.showToast('Mapel dan judul wajib diisi.', 'error'); return; }
+
+  const payload = { mata_pelajaran:mapel, tipe, judul, deskripsi:desc, file_url:url||null, tags, uploaded_by:uploaderName };
+  let error;
+  if (id) {
+    ({ error } = await supabaseClient.from('materials').update(payload).eq('id', id));
+  } else {
+    ({ error } = await supabaseClient.from('materials').insert(payload));
+  }
+  if (error) { App.showToast('Gagal simpan: ' + error.message, 'error'); return; }
+  App.showToast('Materi tersimpan! 📚', 'success');
+  closeModal();
+  loadMateri();
+};
+
+window.deleteMateri = async (id) => {
+  const ok = await App.confirmDelete('Hapus materi ini?');
+  if (!ok) return;
+  await supabaseClient.from('materials').delete().eq('id', id);
+  App.showToast('Materi dihapus.', 'success');
+  loadMateri();
+};
+
+document.getElementById('search-materi').oninput = loadMateri;
+document.getElementById('filter-type').onchange  = loadMateri;
+
+loadMateri();
+</script>
+</body>
+</html>

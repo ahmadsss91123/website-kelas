@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jadwal Pelajaran – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .day-tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:24px; }
+    .day-tab {
+      padding:8px 18px; border-radius:var(--radius); border:1.5px solid var(--border);
+      background:var(--surface); font-size:.84rem; font-weight:600;
+      cursor:pointer; transition:all var(--transition); color:var(--text-secondary);
+    }
+    .day-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .day-tab.today  { border-color:var(--accent); color:var(--accent); }
+
+    .jadwal-list { display:flex; flex-direction:column; gap:10px; }
+    .jadwal-item {
+      display:grid; grid-template-columns:72px 1fr auto;
+      gap:12px; align-items:center;
+      padding:14px 18px;
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-sm);
+      transition:all var(--transition);
+      position:relative; overflow:hidden;
+    }
+    .jadwal-item::before {
+      content:''; position:absolute; left:0; top:0; bottom:0;
+      width:4px; background:var(--accent);
+    }
+    .jadwal-item.active-now::before { background:var(--success); }
+    .jadwal-item.active-now { border-color:var(--success); background:var(--success-light); }
+    .jadwal-item.past { opacity:.55; }
+
+    .jadwal-time { font-weight:700; font-size:.9rem; text-align:center; color:var(--text-secondary); }
+    .jadwal-time small { display:block; font-size:.72rem; font-weight:400; margin-top:2px; }
+
+    .jadwal-mapel { font-weight:700; font-size:.95rem; }
+    .jadwal-guru  { font-size:.8rem; color:var(--text-secondary); margin-top:2px; }
+    .jadwal-room  { font-size:.78rem; color:var(--text-muted); }
+
+    .jadwal-status-badge {
+      font-size:.72rem; font-weight:700; padding:3px 10px;
+      border-radius:20px; white-space:nowrap;
+    }
+    .status-now  { background:var(--success-light); color:var(--success); }
+    .status-next { background:var(--warning-light); color:var(--warning); }
+    .status-done { background:var(--surface-2); color:var(--text-muted); }
+
+    .countdown-banner {
+      background:linear-gradient(135deg,var(--accent),var(--accent-hover));
+      color:#fff; border-radius:var(--radius-lg); padding:20px 24px;
+      margin-bottom:24px; display:flex; align-items:center; justify-content:space-between;
+      gap:16px; flex-wrap:wrap;
+    }
+    .countdown-banner h3 { font-size:1rem; font-weight:600; opacity:.9; margin-bottom:4px; }
+    .countdown-timer {
+      font-family:var(--font-display); font-size:2rem;
+      letter-spacing:.05em;
+    }
+    .countdown-mapel { font-size:.85rem; opacity:.8; }
+    .countdown-right { text-align:right; }
+
+    .empty-day {
+      text-align:center; padding:48px 24px;
+      color:var(--text-muted); font-size:.9rem;
+    }
+    .empty-day .empty-icon { font-size:3rem; margin-bottom:12px; }
+
+    .mapel-color-dot {
+      width:8px; height:8px; border-radius:50%;
+      display:inline-block; margin-right:6px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🎓</div>
+        <div><div class="brand-name">ManajemenKelas</div><div class="brand-sub">Sistem Informasi</div></div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info"><div id="sidebar-name">Loading…</div><div id="sidebar-role"></div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-link" href="index.html" data-page="index.html" data-role-access="admin"><span class="nav-icon">📊</span> Dashboard</a>
+      <a class="nav-link" href="kas.html" data-page="kas.html" data-role-access="admin,pengurus_kas"><span class="nav-icon">💰</span> Kas Kelas</a>
+      <a class="nav-link" href="absensi.html" data-page="absensi.html" data-role-access="admin,pengurus_absensi"><span class="nav-icon">📋</span> Absensi</a>
+      <a class="nav-link" href="laporan.html" data-page="laporan.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📈</span> Laporan</a>
+      <div class="nav-section-label">Sosial & Akademik</div>
+      <a class="nav-link" href="confession.html" data-page="confession.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">💬</span> Confession</a>
+      <a class="nav-link" href="memories.html" data-page="memories.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📸</span> Memories</a>
+      <a class="nav-link" href="leaderboard.html" data-page="leaderboard.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">🏆</span> Leaderboard</a>
+      <a class="nav-link" href="jadwal.html" data-page="jadwal.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📅</span> Jadwal</a>
+      <a class="nav-link" href="tugas.html" data-page="tugas.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📝</span> Tugas</a>
+      <a class="nav-link" href="materi.html" data-page="materi.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📚</span> Bank Materi</a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-link" href="index.html" data-role-access="admin"><span class="nav-icon">👥</span> Kelola Akun</a>
+    </nav>
+    <div class="sidebar-footer"><button id="logout-btn">🚪 Logout</button></div>
+  </aside>
+  <div id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">📅 Jadwal Pelajaran</h2>
+      <div class="navbar-right" id="admin-add-btn" style="display:none">
+        <button class="btn btn-primary btn-sm" id="btn-add-jadwal">+ Tambah Jadwal</button>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <!-- COUNTDOWN -->
+      <div id="countdown-banner" class="countdown-banner" style="display:none">
+        <div>
+          <h3 id="countdown-label">Pelajaran berikutnya</h3>
+          <div class="countdown-mapel" id="countdown-mapel">–</div>
+        </div>
+        <div class="countdown-right">
+          <div class="countdown-timer" id="countdown-timer">--:--:--</div>
+          <div style="font-size:.75rem;opacity:.7">sampai dimulai</div>
+        </div>
+      </div>
+
+      <!-- DAY TABS -->
+      <div class="day-tabs" id="day-tabs"></div>
+
+      <!-- SCHEDULE -->
+      <div id="jadwal-container">
+        <div class="loading-state"><div class="spinner"></div><p>Memuat jadwal…</p></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL JADWAL -->
+<div class="modal-overlay" id="modal-jadwal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-jadwal-title">Tambah Jadwal</h3>
+      <button class="modal-close" id="modal-jadwal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="jadwal-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Hari</label>
+          <select class="form-control" id="jadwal-hari">
+            <option value="1">Senin</option>
+            <option value="2">Selasa</option>
+            <option value="3">Rabu</option>
+            <option value="4">Kamis</option>
+            <option value="5">Jumat</option>
+            <option value="6">Sabtu</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jam Ke-</label>
+          <input class="form-control" type="number" id="jadwal-urutan" min="1" max="12" placeholder="1" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Jam Mulai</label>
+          <input class="form-control" type="time" id="jadwal-mulai" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jam Selesai</label>
+          <input class="form-control" type="time" id="jadwal-selesai" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mata Pelajaran</label>
+        <input class="form-control" type="text" id="jadwal-mapel" placeholder="Matematika, Fisika, dll." />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Guru</label>
+          <input class="form-control" type="text" id="jadwal-guru" placeholder="Nama guru" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ruangan</label>
+          <input class="form-control" type="text" id="jadwal-ruang" placeholder="Ruang XII IPA 1" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-jadwal-cancel">Batal</button>
+      <button class="btn btn-primary" id="modal-jadwal-save">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth(['admin','pengurus_kas','pengurus_absensi','pengunjung']);
+if (!user) throw new Error('No access');
+
+const isAdmin = user.profile?.role === 'admin';
+if (isAdmin) document.getElementById('admin-add-btn').style.display = 'flex';
+
+const DAYS = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const today = new Date();
+const todayDow = today.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+const currentDayNum = todayDow === 0 ? 1 : todayDow; // Default to Mon if Sunday
+
+let selectedDay = currentDayNum <= 6 ? currentDayNum : 1;
+let allSchedule = [];
+
+// ── BUILD DAY TABS ─────────────────────────────────────────────
+const dayTabsEl = document.getElementById('day-tabs');
+[1,2,3,4,5,6].forEach(d => {
+  const btn = document.createElement('button');
+  btn.className = 'day-tab' + (d === selectedDay ? ' active' : '') + (d === currentDayNum ? ' today' : '');
+  btn.textContent = DAYS[d] + (d === currentDayNum ? ' (Hari Ini)' : '');
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.day-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedDay = d;
+    renderDay();
+  });
+  dayTabsEl.appendChild(btn);
+});
+
+// ── LOAD SCHEDULE ─────────────────────────────────────────────
+async function loadAll() {
+  const { data } = await supabaseClient
+    .from('schedules').select('*').order('hari').order('jam_mulai');
+  allSchedule = data || [];
+  renderDay();
+  updateCountdown();
+}
+
+// ── RENDER DAY ────────────────────────────────────────────────
+function renderDay() {
+  const container = document.getElementById('jadwal-container');
+  const dayItems  = allSchedule.filter(s => Number(s.hari) === selectedDay)
+    .sort((a,b) => a.jam_mulai.localeCompare(b.jam_mulai));
+
+  if (!dayItems.length) {
+    container.innerHTML = `
+      <div class="empty-day">
+        <div class="empty-icon">😴</div>
+        <p>Tidak ada pelajaran untuk hari ${DAYS[selectedDay]}.</p>
+        ${isAdmin ? `<button class="btn btn-primary btn-sm" style="margin-top:12px"
+          onclick="document.getElementById('btn-add-jadwal').click()">+ Tambah Jadwal</button>` : ''}
+      </div>`;
+    return;
+  }
+
+  const now = today;
+  const hm  = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  container.innerHTML = `
+    <div class="jadwal-list">
+      ${dayItems.map(item => {
+        const isNow  = selectedDay === currentDayNum && hm >= item.jam_mulai && hm < item.jam_selesai;
+        const isDone = selectedDay === currentDayNum && hm >= item.jam_selesai;
+        const statusHtml = isNow
+          ? `<span class="jadwal-status-badge status-now">🔴 SEDANG BERLANGSUNG</span>`
+          : isDone
+          ? `<span class="jadwal-status-badge status-done">✓ Selesai</span>`
+          : selectedDay === currentDayNum
+          ? `<span class="jadwal-status-badge status-next">⏳ Akan datang</span>`
+          : '';
+        const adminBtns = isAdmin ? `
+          <div style="display:flex;gap:4px;margin-top:6px;">
+            <button class="btn btn-ghost btn-sm" onclick='openEditJadwal(${JSON.stringify(item)})'>✏️</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteJadwal('${item.id}')">🗑️</button>
+          </div>` : '';
+        return `
+          <div class="jadwal-item ${isNow ? 'active-now' : ''} ${isDone ? 'past' : ''}">
+            <div class="jadwal-time">
+              ${item.jam_mulai}<small>–</small>${item.jam_selesai.substring(0,5)}
+            </div>
+            <div>
+              <div class="jadwal-mapel">${item.mata_pelajaran}</div>
+              <div class="jadwal-guru">👤 ${item.guru || '–'}</div>
+              <div class="jadwal-room">📍 ${item.ruangan || '–'}</div>
+              ${adminBtns}
+            </div>
+            <div>${statusHtml}</div>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ── COUNTDOWN ─────────────────────────────────────────────────
+function updateCountdown() {
+  const banner = document.getElementById('countdown-banner');
+  if (currentDayNum < 1 || currentDayNum > 6) { banner.style.display = 'none'; return; }
+
+  const todayItems = allSchedule.filter(s => Number(s.hari) === currentDayNum)
+    .sort((a,b) => a.jam_mulai.localeCompare(b.jam_mulai));
+
+  const now = new Date();
+  const hm  = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const next = todayItems.find(s => s.jam_mulai > hm);
+  const curr = todayItems.find(s => s.jam_mulai <= hm && s.jam_selesai > hm);
+
+  if (curr) {
+    banner.style.display = 'flex';
+    document.getElementById('countdown-label').textContent = '🔴 Sedang berlangsung';
+    document.getElementById('countdown-mapel').textContent = curr.mata_pelajaran + ' – selesai ' + curr.jam_selesai;
+    countdownTo(curr.jam_selesai, 'berakhir');
+  } else if (next) {
+    banner.style.display = 'flex';
+    document.getElementById('countdown-label').textContent = 'Pelajaran berikutnya';
+    document.getElementById('countdown-mapel').textContent = `${next.mata_pelajaran} · ${next.jam_mulai} – ${next.jam_selesai}`;
+    countdownTo(next.jam_mulai, 'dimulai');
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+let countdownInterval;
+function countdownTo(timeStr, label) {
+  clearInterval(countdownInterval);
+  const tick = () => {
+    const now  = new Date();
+    const [h,m] = timeStr.split(':').map(Number);
+    const target = new Date(now); target.setHours(h,m,0,0);
+    let diff = Math.max(0, Math.floor((target - now) / 1000));
+    const hh = String(Math.floor(diff/3600)).padStart(2,'0');
+    const mm = String(Math.floor(diff%3600/60)).padStart(2,'0');
+    const ss = String(diff%60).padStart(2,'0');
+    document.getElementById('countdown-timer').textContent = `${hh}:${mm}:${ss}`;
+    document.querySelector('.countdown-right div:last-child').textContent = `sampai ${label}`;
+    if (diff === 0) { clearInterval(countdownInterval); loadAll(); }
+  };
+  tick();
+  countdownInterval = setInterval(tick, 1000);
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+const modal = document.getElementById('modal-jadwal');
+document.getElementById('btn-add-jadwal').onclick = () => {
+  document.getElementById('jadwal-hari').value = selectedDay;
+  modal.classList.add('show');
+};
+document.getElementById('modal-jadwal-close').onclick  = closeModal;
+document.getElementById('modal-jadwal-cancel').onclick = closeModal;
+
+function closeModal() {
+  modal.classList.remove('show');
+  ['jadwal-id','jadwal-mapel','jadwal-guru','jadwal-ruang','jadwal-mulai','jadwal-selesai']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('jadwal-urutan').value = '';
+}
+
+window.openEditJadwal = (item) => {
+  document.getElementById('jadwal-id').value      = item.id;
+  document.getElementById('jadwal-hari').value    = item.hari;
+  document.getElementById('jadwal-urutan').value  = item.urutan || '';
+  document.getElementById('jadwal-mulai').value   = item.jam_mulai;
+  document.getElementById('jadwal-selesai').value = item.jam_selesai;
+  document.getElementById('jadwal-mapel').value   = item.mata_pelajaran;
+  document.getElementById('jadwal-guru').value    = item.guru || '';
+  document.getElementById('jadwal-ruang').value   = item.ruangan || '';
+  document.getElementById('modal-jadwal-title').textContent = 'Edit Jadwal';
+  modal.classList.add('show');
+};
+
+document.getElementById('modal-jadwal-save').onclick = async () => {
+  const id      = document.getElementById('jadwal-id').value;
+  const hari    = Number(document.getElementById('jadwal-hari').value);
+  const mulai   = document.getElementById('jadwal-mulai').value;
+  const selesai = document.getElementById('jadwal-selesai').value;
+  const mapel   = document.getElementById('jadwal-mapel').value.trim();
+  const guru    = document.getElementById('jadwal-guru').value.trim();
+  const ruang   = document.getElementById('jadwal-ruang').value.trim();
+  const urutan  = Number(document.getElementById('jadwal-urutan').value) || null;
+
+  if (!mapel || !mulai || !selesai) { App.showToast('Mapel, jam mulai, dan selesai wajib diisi.', 'error'); return; }
+
+  const payload = { hari, jam_mulai:mulai, jam_selesai:selesai, mata_pelajaran:mapel, guru, ruangan:ruang, urutan };
+  let error;
+  if (id) {
+    ({ error } = await supabaseClient.from('schedules').update(payload).eq('id', id));
+  } else {
+    ({ error } = await supabaseClient.from('schedules').insert(payload));
+  }
+  if (error) { App.showToast('Gagal simpan: ' + error.message, 'error'); return; }
+  App.showToast('Jadwal tersimpan!', 'success');
+  closeModal();
+  loadAll();
+};
+
+window.deleteJadwal = async (id) => {
+  const ok = await App.confirmDelete('Hapus jadwal ini?');
+  if (!ok) return;
+  await supabaseClient.from('schedules').delete().eq('id', id);
+  App.showToast('Jadwal dihapus.', 'success');
+  loadAll();
+};
+
+loadAll();
+setInterval(renderDay, 30000); // refresh every 30s
+</script>
+</body>
+</html>

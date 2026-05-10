@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tugas – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .tugas-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+    .tugas-card {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius-lg); padding:0; overflow:hidden;
+      box-shadow:var(--shadow-sm); transition:transform var(--transition),box-shadow var(--transition);
+    }
+    .tugas-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); }
+    .tugas-card.danger { border-color:var(--danger); }
+    .tugas-card.warning { border-color:var(--warning); }
+    .tugas-card.done { opacity:.6; }
+
+    .tugas-header {
+      padding:14px 18px 12px;
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:flex-start; justify-content:space-between; gap:8px;
+    }
+    .tugas-mapel {
+      font-size:.72rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.06em; color:var(--accent); margin-bottom:4px;
+    }
+    .tugas-judul { font-weight:700; font-size:.95rem; line-height:1.4; }
+
+    .tugas-body { padding:14px 18px; }
+    .tugas-desc { font-size:.84rem; color:var(--text-secondary); line-height:1.6; margin-bottom:12px; }
+
+    .deadline-display {
+      display:flex; align-items:center; gap:8px;
+      padding:8px 12px; border-radius:var(--radius);
+      font-size:.82rem; font-weight:600; margin-bottom:10px;
+    }
+    .deadline-normal  { background:var(--surface-2); color:var(--text-secondary); }
+    .deadline-warning { background:var(--warning-light); color:var(--warning); border:1px solid rgba(214,137,16,.2); }
+    .deadline-danger  { background:var(--danger-light); color:var(--danger); border:1px solid rgba(192,57,43,.2); animation:pulse 2s infinite; }
+    .deadline-done    { background:var(--success-light); color:var(--success); }
+
+    @keyframes pulse {
+      0%,100% { opacity:1; }
+      50%      { opacity:.7; }
+    }
+
+    .tugas-footer {
+      padding:10px 18px; border-top:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      background:var(--surface-2);
+    }
+    .tugas-actions { display:flex; gap:6px; }
+
+    .selesai-toggle {
+      display:flex; align-items:center; gap:6px;
+      font-size:.8rem; font-weight:600; cursor:pointer;
+      color:var(--text-secondary);
+    }
+    .selesai-toggle input { cursor:pointer; width:16px; height:16px; accent-color:var(--accent); }
+    .selesai-toggle.checked { color:var(--success); }
+
+    .urgency-bar { height:3px; width:100%; }
+    .urgency-bar.danger  { background:var(--danger); }
+    .urgency-bar.warning { background:var(--warning); }
+    .urgency-bar.normal  { background:var(--accent); }
+    .urgency-bar.done    { background:var(--success); }
+
+    .filter-mapel-list { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+    .mapel-tag {
+      padding:5px 14px; border-radius:20px; border:1.5px solid var(--border);
+      background:var(--surface); font-size:.8rem; font-weight:600;
+      cursor:pointer; transition:all var(--transition); color:var(--text-secondary);
+    }
+    .mapel-tag.active, .mapel-tag:hover {
+      border-color:var(--accent); background:var(--accent-light); color:var(--accent);
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🎓</div>
+        <div><div class="brand-name">ManajemenKelas</div><div class="brand-sub">Sistem Informasi</div></div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info"><div id="sidebar-name">Loading…</div><div id="sidebar-role"></div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-link" href="index.html" data-page="index.html" data-role-access="admin"><span class="nav-icon">📊</span> Dashboard</a>
+      <a class="nav-link" href="kas.html" data-page="kas.html" data-role-access="admin,pengurus_kas"><span class="nav-icon">💰</span> Kas Kelas</a>
+      <a class="nav-link" href="absensi.html" data-page="absensi.html" data-role-access="admin,pengurus_absensi"><span class="nav-icon">📋</span> Absensi</a>
+      <a class="nav-link" href="laporan.html" data-page="laporan.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📈</span> Laporan</a>
+      <div class="nav-section-label">Sosial & Akademik</div>
+      <a class="nav-link" href="confession.html" data-page="confession.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">💬</span> Confession</a>
+      <a class="nav-link" href="memories.html" data-page="memories.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📸</span> Memories</a>
+      <a class="nav-link" href="leaderboard.html" data-page="leaderboard.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">🏆</span> Leaderboard</a>
+      <a class="nav-link" href="jadwal.html" data-page="jadwal.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📅</span> Jadwal</a>
+      <a class="nav-link" href="tugas.html" data-page="tugas.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📝</span> Tugas</a>
+      <a class="nav-link" href="materi.html" data-page="materi.html" data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung"><span class="nav-icon">📚</span> Bank Materi</a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-link" href="index.html" data-role-access="admin"><span class="nav-icon">👥</span> Kelola Akun</a>
+    </nav>
+    <div class="sidebar-footer"><button id="logout-btn">🚪 Logout</button></div>
+  </aside>
+  <div id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">📝 Deadline Tugas</h2>
+      <div class="navbar-right">
+        <button class="btn btn-primary btn-sm" id="btn-add-tugas">+ Tambah Tugas</button>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <!-- STATS -->
+      <div class="stats-grid" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div class="stat-icon blue">📝</div>
+          <div><div class="stat-value" id="stat-total-tugas">–</div><div class="stat-label">Total Tugas</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">🔥</div>
+          <div><div class="stat-value" id="stat-urgent">–</div><div class="stat-label">Deadline ≤ 3 Hari</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div><div class="stat-value" id="stat-done">–</div><div class="stat-label">Sudah Selesai</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">⏳</div>
+          <div><div class="stat-value" id="stat-pending">–</div><div class="stat-label">Belum Selesai</div></div>
+        </div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filters-bar" style="margin-bottom:12px;">
+        <div class="filter-group">
+          <label class="filter-label">Status</label>
+          <select class="filter-control" id="filter-status">
+            <option value="">Semua</option>
+            <option value="pending">Belum Selesai</option>
+            <option value="done">Sudah Selesai</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Mapel</label>
+          <input type="text" class="filter-control" id="filter-mapel" placeholder="Cari mapel…" />
+        </div>
+      </div>
+
+      <div id="mapel-tags" class="filter-mapel-list"></div>
+      <div id="tugas-container">
+        <div class="loading-state"><div class="spinner"></div><p>Memuat tugas…</p></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL TUGAS -->
+<div class="modal-overlay" id="modal-tugas">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-tugas-title">Tambah Tugas</h3>
+      <button class="modal-close" id="modal-tugas-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="tugas-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mata Pelajaran</label>
+          <input class="form-control" type="text" id="tugas-mapel" placeholder="Matematika" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deadline</label>
+          <input class="form-control" type="date" id="tugas-deadline" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Judul Tugas</label>
+        <input class="form-control" type="text" id="tugas-judul" placeholder="Latihan soal halaman 45..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deskripsi (opsional)</label>
+        <textarea class="form-control" id="tugas-desc" rows="3"
+          placeholder="Detail pengerjaan, format pengumpulan, dll."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-tugas-cancel">Batal</button>
+      <button class="btn btn-primary" id="modal-tugas-save">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth(['admin','pengurus_kas','pengurus_absensi','pengunjung']);
+if (!user) throw new Error('No access');
+const isAdmin = user.profile?.role === 'admin';
+
+// ── DEADLINE UTILS ────────────────────────────────────────────
+function daysLeft(deadline) {
+  const now  = new Date(); now.setHours(0,0,0,0);
+  const dl   = new Date(deadline); dl.setHours(0,0,0,0);
+  return Math.ceil((dl - now) / (1000 * 60 * 60 * 24));
+}
+
+function deadlineInfo(deadline, selesai) {
+  if (selesai) return { text:'✅ Selesai', cls:'deadline-done', urgency:'done' };
+  const d = daysLeft(deadline);
+  if (d < 0)  return { text:`⚠️ Terlambat ${Math.abs(d)} hari`, cls:'deadline-danger', urgency:'danger' };
+  if (d === 0) return { text:'🔴 HARI INI!', cls:'deadline-danger', urgency:'danger' };
+  if (d <= 3)  return { text:`🟠 ${d} hari lagi`, cls:'deadline-warning', urgency:'warning' };
+  return { text:`📅 ${d} hari lagi`, cls:'deadline-normal', urgency:'normal' };
+}
+
+// ── LOAD TUGAS ────────────────────────────────────────────────
+async function loadTugas() {
+  const statusFilter = document.getElementById('filter-status').value;
+  const mapelFilter  = document.getElementById('filter-mapel').value.trim().toLowerCase();
+
+  const { data } = await supabaseClient
+    .from('tasks').select('*').order('deadline').order('created_at', { ascending: false });
+
+  let rows = data || [];
+
+  // Stats
+  const total   = rows.length;
+  const urgent  = rows.filter(r => !r.selesai && daysLeft(r.deadline) <= 3).length;
+  const done    = rows.filter(r => r.selesai).length;
+  document.getElementById('stat-total-tugas').textContent = total;
+  document.getElementById('stat-urgent').textContent      = urgent;
+  document.getElementById('stat-done').textContent        = done;
+  document.getElementById('stat-pending').textContent     = total - done;
+
+  // Mapel tags
+  const mapels = [...new Set(rows.map(r => r.mata_pelajaran))].sort();
+  const tagsEl = document.getElementById('mapel-tags');
+  tagsEl.innerHTML = ['', ...mapels].map(m => `
+    <button class="mapel-tag ${mapelFilter === m ? 'active' : ''}" data-mapel="${m}">
+      ${m || '🌟 Semua'}
+    </button>`).join('');
+  tagsEl.querySelectorAll('.mapel-tag').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('filter-mapel').value = btn.dataset.mapel;
+      loadTugas();
+    });
+  });
+
+  // Filters
+  if (statusFilter === 'done')    rows = rows.filter(r => r.selesai);
+  if (statusFilter === 'pending') rows = rows.filter(r => !r.selesai);
+  if (mapelFilter)                rows = rows.filter(r => r.mata_pelajaran?.toLowerCase().includes(mapelFilter));
+
+  if (!rows.length) { App.showEmpty('tugas-container', 'Tidak ada tugas yang ditemukan.'); return; }
+
+  // Sort: urgent first, done last
+  rows.sort((a,b) => {
+    if (a.selesai !== b.selesai) return a.selesai ? 1 : -1;
+    return new Date(a.deadline) - new Date(b.deadline);
+  });
+
+  document.getElementById('tugas-container').innerHTML =
+    `<div class="tugas-grid">${rows.map(t => renderTugas(t)).join('')}</div>`;
+}
+
+function renderTugas(t) {
+  const info = deadlineInfo(t.deadline, t.selesai);
+  const adminBtns = isAdmin ? `
+    <button class="btn btn-ghost btn-sm" onclick='openEditTugas(${JSON.stringify(t)})'>✏️</button>
+    <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteTugas('${t.id}')">🗑️</button>
+  ` : '';
+
+  return `
+    <div class="tugas-card ${info.urgency} ${t.selesai ? 'done' : ''}">
+      <div class="urgency-bar ${info.urgency}"></div>
+      <div class="tugas-header">
+        <div>
+          <div class="tugas-mapel">${t.mata_pelajaran}</div>
+          <div class="tugas-judul">${t.judul}</div>
+        </div>
+      </div>
+      <div class="tugas-body">
+        ${t.deskripsi ? `<div class="tugas-desc">${t.deskripsi}</div>` : ''}
+        <div class="deadline-display ${info.cls}">
+          ${info.text}
+          <span style="margin-left:auto;opacity:.7;font-weight:400">${App.formatDate(t.deadline)}</span>
+        </div>
+      </div>
+      <div class="tugas-footer">
+        <label class="selesai-toggle ${t.selesai ? 'checked' : ''}">
+          <input type="checkbox" ${t.selesai ? 'checked' : ''}
+            onchange="toggleSelesai('${t.id}', this.checked)" />
+          ${t.selesai ? 'Sudah selesai' : 'Tandai selesai'}
+        </label>
+        <div class="tugas-actions">${adminBtns}</div>
+      </div>
+    </div>`;
+}
+
+// ── TOGGLE SELESAI ────────────────────────────────────────────
+window.toggleSelesai = async (id, checked) => {
+  await supabaseClient.from('tasks').update({ selesai: checked }).eq('id', id);
+  App.showToast(checked ? 'Tugas ditandai selesai! ✅' : 'Tugas dibuka kembali.', checked ? 'success' : 'info');
+  loadTugas();
+};
+
+// ── MODAL ─────────────────────────────────────────────────────
+const modal = document.getElementById('modal-tugas');
+document.getElementById('btn-add-tugas').onclick = () => modal.classList.add('show');
+document.getElementById('modal-tugas-close').onclick  = closeModal;
+document.getElementById('modal-tugas-cancel').onclick = closeModal;
+
+function closeModal() {
+  modal.classList.remove('show');
+  ['tugas-id','tugas-mapel','tugas-deadline','tugas-judul','tugas-desc']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('modal-tugas-title').textContent = 'Tambah Tugas';
+}
+
+window.openEditTugas = (t) => {
+  document.getElementById('tugas-id').value       = t.id;
+  document.getElementById('tugas-mapel').value    = t.mata_pelajaran;
+  document.getElementById('tugas-deadline').value = App.formatDateInput(t.deadline);
+  document.getElementById('tugas-judul').value    = t.judul;
+  document.getElementById('tugas-desc').value     = t.deskripsi || '';
+  document.getElementById('modal-tugas-title').textContent = 'Edit Tugas';
+  modal.classList.add('show');
+};
+
+document.getElementById('modal-tugas-save').onclick = async () => {
+  const id      = document.getElementById('tugas-id').value;
+  const mapel   = document.getElementById('tugas-mapel').value.trim();
+  const deadline= document.getElementById('tugas-deadline').value;
+  const judul   = document.getElementById('tugas-judul').value.trim();
+  const desc    = document.getElementById('tugas-desc').value.trim();
+
+  if (!mapel || !judul || !deadline) { App.showToast('Mapel, judul, dan deadline wajib diisi.', 'error'); return; }
+
+  const payload = { mata_pelajaran:mapel, deadline, judul, deskripsi:desc };
+  let error;
+  if (id) {
+    ({ error } = await supabaseClient.from('tasks').update(payload).eq('id', id));
+  } else {
+    ({ error } = await supabaseClient.from('tasks').insert({ ...payload, selesai:false }));
+  }
+  if (error) { App.showToast('Gagal menyimpan: ' + error.message, 'error'); return; }
+  App.showToast('Tugas tersimpan!', 'success');
+  closeModal();
+  loadTugas();
+};
+
+window.deleteTugas = async (id) => {
+  const ok = await App.confirmDelete('Hapus tugas ini?');
+  if (!ok) return;
+  await supabaseClient.from('tasks').delete().eq('id', id);
+  App.showToast('Tugas dihapus.', 'success');
+  loadTugas();
+};
+
+document.getElementById('filter-status').onchange = loadTugas;
+document.getElementById('filter-mapel').oninput   = loadTugas;
+
+loadTugas();
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaderboard – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">🏆 Leaderboard</h2>
+    </header>
+    <main class="page-content">
+      <div class="page-header">
+        <h1>Leaderboard Keaktifan</h1>
+        <p>Peringkat berdasarkan keaktifan dan kontribusi, bukan nilai akademik</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="xp">⭐ XP Tertinggi</button>
+        <button class="tab" data-tab="streak">🔥 Streak Terpanjang</button>
+        <button class="tab" data-tab="hadir">📋 Kehadiran</button>
+      </div>
+
+      <!-- Top 3 -->
+      <div id="top3" style="display:flex;gap:16px;justify-content:center;margin-bottom:32px;flex-wrap:wrap">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Full Leaderboard -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Peringkat Lengkap</h3>
+        </div>
+        <div class="leaderboard-list" id="leaderboard-list">
+          <div class="loading-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth();
+if (!user) throw new Error('No access');
+
+let currentTab = 'xp';
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    loadLeaderboard();
+  });
+});
+
+async function loadLeaderboard() {
+  let orderBy = 'xp';
+  let label = 'XP';
+  if (currentTab === 'streak') { orderBy = 'streak_login'; label = 'Streak'; }
+  else if (currentTab === 'hadir') { orderBy = 'streak_hadir'; label = 'Kehadiran'; }
+
+  const { data } = await supabaseClient.from('profiles').select('*').order(orderBy, { ascending: false });
+  if (!data?.length) return;
+
+  // Top 3
+  const top3El = document.getElementById('top3');
+  const top3 = data.slice(0, 3);
+  const medals = ['🥇', '🥈', '🥉'];
+  const sizes = ['100px', '85px', '75px'];
+
+  top3El.innerHTML = top3.map((p, i) => {
+    const value = currentTab === 'xp' ? `${p.xp || 0} XP` : currentTab === 'streak' ? `${p.streak_login || 0} hari` : `${p.streak_hadir || 0}`;
+    return `<div style="text-align:center;${i === 0 ? 'order:1' : i === 1 ? 'order:0' : 'order:2'}">
+      <div style="font-size:2rem;margin-bottom:8px">${medals[i]}</div>
+      <div style="width:${sizes[i]};height:${sizes[i]};border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;margin:0 auto 8px">
+        ${(p.full_name || 'U')[0].toUpperCase()}
+      </div>
+      <div style="font-weight:600;font-size:.9rem">${p.full_name || p.email}</div>
+      <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--accent)">${value}</div>
+      <div style="font-size:.72rem;color:var(--text-muted)">Level ${p.level || 1} ${App.getLevelBadge(p.level || 1)}</div>
+    </div>`;
+  }).join('');
+
+  // Full list
+  const listEl = document.getElementById('leaderboard-list');
+  listEl.innerHTML = data.map((p, i) => {
+    const value = currentTab === 'xp' ? `${p.xp || 0} XP` : currentTab === 'streak' ? `${p.streak_login || 0} hari` : `${p.streak_hadir || 0}`;
+    const topClass = i === 0 ? 'top-1' : i === 1 ? 'top-2' : i === 2 ? 'top-3' : '';
+    const isMe = p.id === user.id;
+    return `<div class="leaderboard-item ${topClass} animate-slide" ${isMe ? 'style="background:var(--accent-light)"' : ''}>
+      <div class="lb-rank">#${i + 1}</div>
+      <div class="lb-avatar">${(p.full_name || 'U')[0].toUpperCase()}</div>
+      <div class="lb-info">
+        <div class="lb-name">${p.full_name || p.email}${isMe ? ' (Kamu)' : ''}</div>
+        <div class="lb-detail">Level ${p.level || 1} ${App.getLevelBadge(p.level || 1)} • Streak: ${p.streak_login || 0} hari</div>
+      </div>
+      <div class="lb-xp">${value}</div>
+    </div>`;
+  }).join('');
+}
+loadLeaderboard();
+</script>
+</body>
+</html>

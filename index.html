@@ -8,101 +8,142 @@
 </head>
 <body>
 <div class="app-layout">
-  <!-- SIDEBAR -->
-  <aside id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-brand">
-        <div class="brand-icon">🎓</div>
-        <div>
-          <div class="brand-name">ManajemenKelas</div>
-          <div class="brand-sub">Sistem Informasi</div>
-        </div>
-      </div>
-      <div class="sidebar-user">
-        <div class="user-avatar" id="sidebar-avatar">A</div>
-        <div class="user-info">
-          <div id="sidebar-name">Loading…</div>
-          <div id="sidebar-role"></div>
-        </div>
-      </div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Menu Utama</div>
-      <a class="nav-link" href="index.html" data-page="index.html"
-         data-role-access="admin">
-        <span class="nav-icon">📊</span> Dashboard
-      </a>
-      <a class="nav-link" href="kas.html" data-page="kas.html"
-         data-role-access="admin,pengurus_kas">
-        <span class="nav-icon">💰</span> Kas Kelas
-      </a>
-      <a class="nav-link" href="absensi.html" data-page="absensi.html"
-         data-role-access="admin,pengurus_absensi">
-        <span class="nav-icon">📋</span> Absensi
-      </a>
-      <a class="nav-link" href="laporan.html" data-page="laporan.html"
-         data-role-access="admin,pengurus_kas,pengurus_absensi,pengunjung">
-        <span class="nav-icon">📈</span> Laporan
-      </a>
-      <div class="nav-section-label">Admin</div>
-      <a class="nav-link" href="#" id="manage-users-link"
-         data-role-access="admin">
-        <span class="nav-icon">👥</span> Kelola Akun
-      </a>
-    </nav>
-    <div class="sidebar-footer">
-      <button id="logout-btn">🚪 Logout</button>
-    </div>
-  </aside>
-  <div id="sidebar-overlay"></div>
-
   <div class="main-content">
     <header class="navbar">
       <button id="sidebar-toggle">☰</button>
       <h2 class="navbar-title">Dashboard</h2>
+      <div class="navbar-right">
+        <div class="weather-widget" id="weather-widget">
+          <span class="weather-icon">🌤️</span>
+          <span class="weather-temp">--°C</span>
+        </div>
+      </div>
     </header>
 
     <main class="page-content">
-      <!-- WELCOME -->
       <div class="welcome-banner">
         <h2 id="welcome-msg">Selamat datang! 👋</h2>
-        <p>Ringkasan data manajemen kelas hari ini</p>
+        <p id="welcome-date">Ringkasan data manajemen kelas hari ini</p>
       </div>
 
       <!-- STATS -->
       <div class="stats-grid" id="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card hover-lift">
           <div class="stat-icon green">👥</div>
-          <div>
-            <div class="stat-value" id="stat-siswa">–</div>
-            <div class="stat-label">Total Siswa</div>
-          </div>
+          <div><div class="stat-value" id="stat-siswa">–</div><div class="stat-label">Total Siswa</div></div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card hover-lift">
           <div class="stat-icon orange">💰</div>
-          <div>
-            <div class="stat-value" id="stat-kas">–</div>
-            <div class="stat-label">Total Kas</div>
-          </div>
+          <div><div class="stat-value" id="stat-kas">–</div><div class="stat-label">Total Kas</div></div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card hover-lift">
           <div class="stat-icon blue">📋</div>
-          <div>
-            <div class="stat-value" id="stat-absensi">–</div>
-            <div class="stat-label">Catatan Absensi</div>
+          <div><div class="stat-value" id="stat-absensi">–</div><div class="stat-label">Catatan Absensi</div></div>
+        </div>
+        <div class="stat-card hover-lift">
+          <div class="stat-icon green">✅</div>
+          <div><div class="stat-value" id="stat-hadir">–</div><div class="stat-label">Hadir Hari Ini</div></div>
+        </div>
+        <div class="stat-card hover-lift">
+          <div class="stat-icon purple">⭐</div>
+          <div><div class="stat-value" id="stat-xp">–</div><div class="stat-label">Total XP Saya</div></div>
+        </div>
+        <div class="stat-card hover-lift">
+          <div class="stat-icon red">📝</div>
+          <div><div class="stat-value" id="stat-tugas">–</div><div class="stat-label">Tugas Aktif</div></div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div>
+          <!-- QUOTE HARIAN -->
+          <div class="quote-card" id="daily-quote" style="margin-bottom:24px">
+            <div class="quote-text" id="quote-text">Memuat quote...</div>
+            <div class="quote-author" id="quote-author"></div>
+          </div>
+
+          <!-- PENGUMUMAN TERBARU -->
+          <div class="card" style="margin-bottom:24px">
+            <div class="card-header">
+              <h3 class="card-title">📢 Pengumuman Terbaru</h3>
+              <a href="pengumuman.html" class="btn btn-ghost btn-sm">Lihat Semua →</a>
+            </div>
+            <div id="dashboard-announcements">
+              <div class="loading-state"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <!-- JADWAL HARI INI -->
+          <div class="card" style="margin-bottom:24px">
+            <div class="card-header">
+              <h3 class="card-title">📅 Jadwal Hari Ini</h3>
+              <a href="jadwal.html" class="btn btn-ghost btn-sm">Lihat Semua →</a>
+            </div>
+            <div id="dashboard-schedule">
+              <div class="loading-state"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <!-- TUGAS MENDEKATI DEADLINE -->
+          <div class="card" style="margin-bottom:24px">
+            <div class="card-header">
+              <h3 class="card-title">📝 Tugas Mendekati Deadline</h3>
+              <a href="tugas.html" class="btn btn-ghost btn-sm">Lihat Semua →</a>
+            </div>
+            <div id="dashboard-tasks">
+              <div class="loading-state"><div class="spinner"></div></div>
+            </div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon green">✅</div>
-          <div>
-            <div class="stat-value" id="stat-hadir">–</div>
-            <div class="stat-label">Hadir Hari Ini</div>
+
+        <div>
+          <!-- EVENT COUNTDOWN -->
+          <div class="card" style="margin-bottom:24px">
+            <div class="card-header">
+              <h3 class="card-title">⏰ Event Countdown</h3>
+            </div>
+            <div id="event-countdowns">
+              <div class="loading-state"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <!-- ATTENDANCE SUMMARY -->
+          <div class="card" style="margin-bottom:24px">
+            <div class="card-header">
+              <h3 class="card-title">📊 Absensi Hari Ini</h3>
+            </div>
+            <div id="attendance-summary">
+              <div class="loading-state"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <!-- MINI SHOUTBOX -->
+          <div class="shoutbox" style="margin-bottom:24px">
+            <div class="shoutbox-header">💬 Shoutbox Kelas</div>
+            <div class="shoutbox-messages" id="shoutbox-messages">
+              <div class="loading-state"><div class="spinner"></div></div>
+            </div>
+            <div class="shoutbox-input">
+              <input type="text" id="shoutbox-input" placeholder="Tulis pesan..." />
+              <button id="shoutbox-send">Kirim</button>
+            </div>
+          </div>
+
+          <!-- ACTIVE POLLS -->
+          <div class="card" style="margin-bottom:24px">
+            <div class="card-header">
+              <h3 class="card-title">🗳️ Polling Aktif</h3>
+              <a href="polling.html" class="btn btn-ghost btn-sm">Lihat →</a>
+            </div>
+            <div id="dashboard-polls">
+              <div class="loading-state"><div class="spinner"></div></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- AKUN MANAGEMENT -->
-      <div class="card" id="users-section">
+      <!-- KELOLA AKUN -->
+      <div class="card" id="users-section" style="margin-top:24px">
         <div class="card-header">
           <h3 class="card-title">👥 Kelola Akun Pengguna</h3>
           <button class="btn btn-primary btn-sm" id="btn-add-user">+ Tambah Akun</button>
@@ -149,6 +190,24 @@
           </div>
         </div>
       </div>
+
+      <!-- ADMIN: TEMA & SETTINGS -->
+      <div class="card" style="margin-top:24px">
+        <div class="card-header">
+          <h3 class="card-title">🎨 Pengaturan Tema Kelas</h3>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Warna Tema</label>
+            <input class="form-control" type="color" id="theme-color" value="#2D5016" />
+            <p class="form-hint">Ubah warna aksen website</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">&nbsp;</label>
+            <button class="btn btn-primary" id="save-theme">Simpan Tema</button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 </div>
@@ -161,133 +220,259 @@ import { supabaseClient } from './supabase.js';
 const user = await App.requireAuth(['admin']);
 if (!user) throw new Error('No access');
 
-// Welcome message
+App.showWelcomeAnimation();
+
 const name = user.profile?.full_name || user.email || 'Admin';
 document.getElementById('welcome-msg').textContent = `Selamat datang, ${name}! 👋`;
+const today = new Date();
+document.getElementById('welcome-date').textContent = today.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-// ── LOAD STATS ────────────────────────────────────────────────
+// Weather
+App.getWeather().then(w => {
+  document.getElementById('weather-widget').innerHTML = `<span class="weather-icon">${w.icon}</span><span class="weather-temp">${w.temp}°C</span>`;
+});
+
+// Stats
 async function loadStats() {
-  const today = new Date().toISOString().split('T')[0];
-  const [siswaRes, kasRes, absRes, hadirRes] = await Promise.all([
+  const todayStr = today.toISOString().split('T')[0];
+  const [siswaRes, kasRes, absRes, hadirRes, tugasRes] = await Promise.all([
     supabaseClient.from('students').select('id', { count: 'exact', head: true }),
     supabaseClient.from('cash_payments').select('nominal'),
     supabaseClient.from('attendances').select('id', { count: 'exact', head: true }),
-    supabaseClient.from('attendances').select('id', { count: 'exact', head: true })
-      .eq('tanggal', today).eq('status', 'Hadir'),
+    supabaseClient.from('attendances').select('id', { count: 'exact', head: true }).eq('tanggal', todayStr).eq('status', 'Hadir'),
+    supabaseClient.from('assignments').select('id', { count: 'exact', head: true }).gte('deadline', new Date().toISOString()),
   ]);
-
-  document.getElementById('stat-siswa').textContent  = siswaRes.count ?? 0;
+  document.getElementById('stat-siswa').textContent = siswaRes.count ?? 0;
   document.getElementById('stat-absensi').textContent = absRes.count ?? 0;
-  document.getElementById('stat-hadir').textContent  = hadirRes.count ?? 0;
-
+  document.getElementById('stat-hadir').textContent = hadirRes.count ?? 0;
+  document.getElementById('stat-tugas').textContent = tugasRes.count ?? 0;
   const total = (kasRes.data || []).reduce((s, r) => s + Number(r.nominal), 0);
   document.getElementById('stat-kas').textContent = App.formatCurrency(total);
+  document.getElementById('stat-xp').textContent = `${user.profile?.xp || 0} XP`;
 }
-
 loadStats();
 
-// ── LOAD USERS ────────────────────────────────────────────────
+// Daily Quote
+async function loadQuote() {
+  const { data } = await supabaseClient.from('quotes').select('*');
+  if (data?.length) {
+    const seed = Math.floor(Date.now() / 86400000);
+    const q = data[seed % data.length];
+    document.getElementById('quote-text').textContent = q.teks;
+    document.getElementById('quote-author').textContent = q.penulis ? `— ${q.penulis}` : '';
+  } else {
+    document.getElementById('quote-text').textContent = 'Belum ada quote tersedia';
+  }
+}
+loadQuote();
+
+// Dashboard Announcements
+async function loadAnnouncements() {
+  const { data } = await supabaseClient.from('announcements').select('*').order('is_pinned', { ascending: false }).order('created_at', { ascending: false }).limit(3);
+  const el = document.getElementById('dashboard-announcements');
+  if (!data?.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;padding:12px">Belum ada pengumuman</p>'; return; }
+  el.innerHTML = data.map(a => `
+    <div class="announcement-card ${a.is_pinned ? 'pinned' : ''}" style="margin-bottom:8px">
+      <div class="announcement-title">${a.is_pinned ? '📌' : ''} ${a.judul}</div>
+      <div class="announcement-body" style="max-height:60px;overflow:hidden">${a.isi}</div>
+      <div class="announcement-meta"><span>${App.timeAgo(a.created_at)}</span></div>
+    </div>`).join('');
+}
+loadAnnouncements();
+
+// Dashboard Schedule
+async function loadTodaySchedule() {
+  const todayStr = today.toISOString().split('T')[0];
+  const el = document.getElementById('dashboard-schedule');
+  if (App.isHoliday(todayStr)) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger)"><span style="font-size:2rem">🎉</span><p style="font-weight:600;margin-top:8px">Hari Libur!</p></div>';
+    return;
+  }
+  const { data } = await supabaseClient.from('schedules').select('*').eq('tanggal', todayStr).order('jam_mulai');
+  if (!data?.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;padding:12px">Tidak ada jadwal hari ini</p>'; return; }
+  const now = today.toTimeString().substring(0, 5);
+  el.innerHTML = '<div class="schedule-grid">' + data.map(s => {
+    const isNow = now >= (s.jam_mulai||'').substring(0,5) && now < (s.jam_selesai||'').substring(0,5);
+    return `<div class="schedule-item ${isNow ? 'active-now' : ''} ${s.status === 'libur' ? 'holiday' : ''}">
+      <div class="schedule-time"><div class="time-start">${App.formatTime(s.jam_mulai)}</div><div class="time-end">${App.formatTime(s.jam_selesai)}</div></div>
+      <div class="schedule-info"><div class="schedule-subject">${s.mata_pelajaran || s.catatan || '-'}</div><div class="schedule-detail">${s.guru || ''} ${s.ruang_kelas ? '• ' + s.ruang_kelas : ''}</div></div>
+    </div>`;
+  }).join('') + '</div>';
+}
+loadTodaySchedule();
+
+// Dashboard Tasks
+async function loadUpcomingTasks() {
+  const { data } = await supabaseClient.from('assignments').select('*').gte('deadline', new Date().toISOString()).order('deadline').limit(3);
+  const el = document.getElementById('dashboard-tasks');
+  if (!data?.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;padding:12px">Tidak ada tugas mendekati deadline</p>'; return; }
+  el.innerHTML = data.map(t => {
+    const cd = App.getCountdown(t.deadline);
+    const urgency = cd.days <= 1 ? 'overdue' : cd.days <= 3 ? 'soon' : '';
+    return `<div class="task-card ${cd.days <= 1 ? 'urgent' : cd.days <= 3 ? 'warning' : ''}" style="margin-bottom:8px">
+      <div class="task-header"><div class="task-title">${t.judul}</div><span class="task-mapel">${t.mata_pelajaran}</span></div>
+      <div class="task-footer"><span class="task-deadline ${urgency}">⏰ ${cd.text}</span><span>${t.guru || ''}</span></div>
+    </div>`;
+  }).join('');
+}
+loadUpcomingTasks();
+
+// Event Countdowns
+async function loadEventCountdowns() {
+  const { data } = await supabaseClient.from('events').select('*').gte('tanggal', new Date().toISOString()).order('tanggal').limit(4);
+  const el = document.getElementById('event-countdowns');
+  if (!data?.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;padding:12px">Tidak ada event mendatang</p>'; return; }
+  el.innerHTML = '<div class="event-countdown-list">' + data.map(e => {
+    const cd = App.getCountdown(e.tanggal);
+    return `<div class="event-countdown-card"><div class="event-countdown-info"><h4>${e.judul}</h4><p>${App.formatDate(e.tanggal)}</p></div><div class="event-countdown-timer">${cd.text}</div></div>`;
+  }).join('') + '</div>';
+}
+loadEventCountdowns();
+
+// Attendance Summary
+async function loadAttendanceSummary() {
+  const todayStr = today.toISOString().split('T')[0];
+  const { data } = await supabaseClient.from('attendances').select('status').eq('tanggal', todayStr);
+  const el = document.getElementById('attendance-summary');
+  if (!data?.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;padding:12px">Belum ada data absensi hari ini</p>'; return; }
+  const counts = { Hadir: 0, Izin: 0, Sakit: 0, Alpha: 0 };
+  data.forEach(a => { if (counts[a.status] !== undefined) counts[a.status]++; });
+  const total = data.length;
+  el.innerHTML = Object.entries(counts).map(([k, v]) => {
+    const pct = total ? Math.round(v / total * 100) : 0;
+    const colors = { Hadir: 'var(--success)', Izin: 'var(--info)', Sakit: 'var(--warning)', Alpha: 'var(--danger)' };
+    return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px"><span>${k}</span><span>${v} (${pct}%)</span></div><div class="progress-bar-container"><div class="progress-bar" style="width:${pct}%;background:${colors[k]}"></div></div></div>`;
+  }).join('');
+}
+loadAttendanceSummary();
+
+// Shoutbox
+async function loadShoutbox() {
+  const { data } = await supabaseClient.from('shoutbox').select('*').order('created_at', { ascending: false }).limit(20);
+  const el = document.getElementById('shoutbox-messages');
+  if (!data?.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.82rem;padding:12px">Belum ada pesan</p>'; return; }
+  el.innerHTML = data.reverse().map(m => `<div class="shoutbox-msg"><span class="msg-author">${m.user_name || 'Anonim'}</span><span class="msg-time">${App.timeAgo(m.created_at)}</span><br><span class="msg-text">${m.pesan}</span></div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+loadShoutbox();
+
+document.getElementById('shoutbox-send').onclick = async () => {
+  const input = document.getElementById('shoutbox-input');
+  const pesan = input.value.trim();
+  if (!pesan) return;
+  await supabaseClient.from('shoutbox').insert({ user_id: user.id, user_name: user.profile?.full_name || user.email, pesan: App.filterBadWords(pesan) });
+  input.value = '';
+  await App.addXP(user.id, 1, 'Kirim shoutbox');
+  loadShoutbox();
+};
+document.getElementById('shoutbox-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('shoutbox-send').click(); });
+
+// Active Polls
+async function loadActivePolls() {
+  const { data } = await supabaseClient.from('polls').select('*, poll_options(*)').eq('is_active', true).limit(2);
+  const el = document.getElementById('dashboard-polls');
+  if (!data?.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;padding:12px">Tidak ada polling aktif</p>'; return; }
+  el.innerHTML = data.map(p => {
+    const totalVotes = p.poll_options.reduce((s, o) => s + (o.votes || 0), 0);
+    return `<div style="margin-bottom:12px"><h4 style="font-size:.88rem;font-weight:600;margin-bottom:8px">${p.judul}</h4>${p.poll_options.map(o => {
+      const pct = totalVotes ? Math.round(o.votes / totalVotes * 100) : 0;
+      return `<div class="poll-option" style="margin-bottom:4px"><div class="poll-bar" style="width:${pct}%"></div><div class="poll-label"><span>${o.teks}</span><span class="poll-pct">${pct}%</span></div></div>`;
+    }).join('')}<div class="poll-total">${totalVotes} suara</div></div>`;
+  }).join('');
+}
+loadActivePolls();
+
+// Users Management
 async function loadUsers() {
   const { data, error } = await supabaseClient.from('profiles').select('*').order('full_name');
   const wrap = document.getElementById('users-table-wrap');
   if (error || !data?.length) { App.showEmpty('users-table-wrap', 'Belum ada akun terdaftar.'); return; }
-
-  wrap.innerHTML = `
-    <div class="table-wrapper">
-      <table>
-        <thead><tr>
-          <th>Nama</th><th>Email</th><th>Role</th><th style="text-align:right">Aksi</th>
-        </tr></thead>
-        <tbody>
-          ${data.map(u => `
-            <tr>
-              <td>${u.full_name || '–'}</td>
-              <td>${u.email || '–'}</td>
-              <td>${App.getRoleBadge(u.role)}</td>
-              <td>
-                <div class="td-actions">
-                  <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u.id}','${u.full_name}','${u.email}','${u.role}')">✏️ Edit</button>
-                  <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteUser('${u.id}','${u.full_name}')">🗑️</button>
-                </div>
-              </td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
+  wrap.innerHTML = `<div class="table-wrapper"><table><thead><tr><th>Nama</th><th>Email</th><th>Role</th><th>XP</th><th style="text-align:right">Aksi</th></tr></thead><tbody>${data.map(u => `<tr><td>${u.full_name || '–'}</td><td>${u.email || '–'}</td><td>${App.getRoleBadge(u.role)}</td><td>${u.xp || 0}</td><td><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openEditUser('${u.id}','${u.full_name}','${u.email}','${u.role}')">✏️ Edit</button><button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteUser('${u.id}','${u.full_name}')">🗑️</button></div></td></tr>`).join('')}</tbody></table></div>`;
 }
-
 loadUsers();
 
-// ── MODAL USER ────────────────────────────────────────────────
-const modalUser   = document.getElementById('modal-user');
-const modalTitle  = document.getElementById('modal-user-title');
-const passGroup   = document.getElementById('user-pass-group');
+// Modal User
+const modalUser = document.getElementById('modal-user');
+const modalTitle = document.getElementById('modal-user-title');
+const passGroup = document.getElementById('user-pass-group');
 
 function openModal(title, showPass = true) {
   modalTitle.textContent = title;
   passGroup.style.display = showPass ? 'block' : 'none';
   modalUser.classList.add('show');
 }
-
 function closeModal() {
   modalUser.classList.remove('show');
-  document.getElementById('user-id').value       = '';
-  document.getElementById('user-name').value     = '';
-  document.getElementById('user-email').value    = '';
+  document.getElementById('user-id').value = '';
+  document.getElementById('user-name').value = '';
+  document.getElementById('user-email').value = '';
   document.getElementById('user-password').value = '';
-  document.getElementById('user-role').value     = 'pengunjung';
+  document.getElementById('user-role').value = 'pengunjung';
 }
 
-document.getElementById('btn-add-user').onclick  = () => openModal('Tambah Akun', true);
-document.getElementById('modal-user-close').onclick  = closeModal;
+document.getElementById('btn-add-user').onclick = () => openModal('Tambah Akun', true);
+document.getElementById('modal-user-close').onclick = closeModal;
 document.getElementById('modal-user-cancel').onclick = closeModal;
 
 window.openEditUser = (id, name, email, role) => {
-  document.getElementById('user-id').value    = id;
-  document.getElementById('user-name').value  = name;
+  document.getElementById('user-id').value = id;
+  document.getElementById('user-name').value = name;
   document.getElementById('user-email').value = email;
-  document.getElementById('user-role').value  = role;
+  document.getElementById('user-role').value = role;
   openModal('Edit Akun', false);
 };
 
 document.getElementById('modal-user-save').onclick = async () => {
-  const id    = document.getElementById('user-id').value;
-  const name  = document.getElementById('user-name').value.trim();
+  const id = document.getElementById('user-id').value;
+  const nameVal = document.getElementById('user-name').value.trim();
   const email = document.getElementById('user-email').value.trim();
-  const pass  = document.getElementById('user-password').value;
-  const role  = document.getElementById('user-role').value;
+  const password = document.getElementById('user-password').value;
+  const role = document.getElementById('user-role').value;
 
-  if (!name || !role) { App.showToast('Nama dan role wajib diisi.', 'error'); return; }
+  if (!nameVal || !email) { App.showToast('Nama dan email wajib diisi', 'error'); return; }
 
-  if (!id) {
-    // Buat user baru via Supabase – catatan: ini membutuhkan service_role key
-    // Sebagai alternatif frontend, kita insert langsung ke profiles setelah daftar
-    if (!email || !pass) { App.showToast('Email dan password wajib untuk akun baru.', 'error'); return; }
-    const { data: authData, error: authErr } = await supabaseClient.auth.signUp({ email, password: pass });
-    if (authErr) { App.showToast('Gagal membuat akun: ' + authErr.message, 'error'); return; }
-    // Update profile setelah daftar
-    const { error: profErr } = await supabaseClient.from('profiles')
-      .upsert({ id: authData.user.id, full_name: name, email, role });
-    if (profErr) { App.showToast('Akun dibuat tapi profil gagal disimpan.', 'error'); return; }
-    App.showToast('Akun berhasil dibuat! Pengguna perlu memverifikasi email.', 'success');
+  if (id) {
+    const { error } = await supabaseClient.from('profiles').update({ full_name: nameVal, email, role }).eq('id', id);
+    if (error) { App.showToast('Gagal update: ' + error.message, 'error'); return; }
+    App.showToast('Akun berhasil diperbarui');
   } else {
-    const { error } = await supabaseClient.from('profiles')
-      .update({ full_name: name, role }).eq('id', id);
-    if (error) { App.showToast('Gagal memperbarui akun.', 'error'); return; }
-    App.showToast('Akun berhasil diperbarui.', 'success');
+    if (!password || password.length < 6) { App.showToast('Password min 6 karakter', 'error'); return; }
+    const { data: authData, error: authErr } = await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: nameVal, role } } });
+    if (authErr) { App.showToast('Gagal: ' + authErr.message, 'error'); return; }
+    if (authData.user) {
+      await supabaseClient.from('profiles').upsert({ id: authData.user.id, email, full_name: nameVal, role });
+    }
+    App.showToast('Akun berhasil ditambahkan');
   }
-
   closeModal();
   loadUsers();
 };
 
 window.deleteUser = async (id, name) => {
-  const ok = await App.confirmDelete(`Hapus akun "${name}"?`);
-  if (!ok) return;
-  const { error } = await supabaseClient.from('profiles').delete().eq('id', id);
-  if (error) { App.showToast('Gagal menghapus akun.', 'error'); return; }
-  App.showToast('Akun berhasil dihapus.', 'success');
+  if (!(await App.confirmDelete(`Hapus akun "${name}"?`))) return;
+  await supabaseClient.from('profiles').delete().eq('id', id);
+  App.showToast('Akun dihapus');
   loadUsers();
+};
+
+document.getElementById('manage-users-link')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('users-section').scrollIntoView({ behavior: 'smooth' });
+});
+
+// Theme settings
+async function loadThemeSetting() {
+  const { data } = await supabaseClient.from('class_settings').select('value').eq('key', 'theme_color').single();
+  if (data?.value) document.getElementById('theme-color').value = data.value;
+}
+loadThemeSetting();
+
+document.getElementById('save-theme').onclick = async () => {
+  const color = document.getElementById('theme-color').value;
+  const { error } = await supabaseClient.from('class_settings').upsert({ key: 'theme_color', value: color }, { onConflict: 'key' });
+  if (error) { App.showToast('Gagal simpan tema', 'error'); return; }
+  document.documentElement.style.setProperty('--accent', color);
+  App.showToast('Tema berhasil diperbarui');
 };
 </script>
 </body>

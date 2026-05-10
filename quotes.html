@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quotes – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">💬 Quotes Harian</h2>
+    </header>
+    <main class="page-content">
+      <div class="page-header">
+        <h1>Quote / Inside Joke Harian</h1>
+        <p>Quote motivasi, lucu, dan inside joke kelas</p>
+      </div>
+
+      <!-- Quote of the Day -->
+      <div class="quote-card" style="margin-bottom:32px">
+        <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:8px">Quote Hari Ini</div>
+        <div class="quote-text" id="daily-quote-text">Memuat...</div>
+        <div class="quote-author" id="daily-quote-author"></div>
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-bar">
+        <div class="btn-group">
+          <button class="chip active" data-filter="">Semua</button>
+          <button class="chip" data-filter="motivasi">💪 Motivasi</button>
+          <button class="chip" data-filter="lucu">😂 Lucu</button>
+          <button class="chip" data-filter="inside_joke">🤫 Inside Joke</button>
+        </div>
+        <button class="btn btn-primary" id="btn-add-quote" style="display:none">+ Tambah Quote</button>
+      </div>
+
+      <div id="quotes-list" style="display:grid;gap:16px">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Modal -->
+      <div class="modal-overlay" id="modal-quote">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Tambah Quote</h3>
+            <button class="modal-close" id="modal-quote-close">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Quote</label>
+              <textarea class="form-control" id="quote-teks" placeholder="Tulis quote..." rows="3"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Penulis (opsional)</label>
+                <input class="form-control" type="text" id="quote-penulis" placeholder="Anonim" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Kategori</label>
+                <select class="form-control" id="quote-kategori">
+                  <option value="motivasi">Motivasi</option>
+                  <option value="lucu">Lucu</option>
+                  <option value="inside_joke">Inside Joke</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" id="modal-quote-cancel">Batal</button>
+            <button class="btn btn-primary" id="modal-quote-save">Simpan</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth();
+if (!user) throw new Error('No access');
+const isAdmin = user.profile?.role === 'admin';
+if (isAdmin) document.getElementById('btn-add-quote').style.display = '';
+
+let currentFilter = '';
+
+// Daily Quote
+async function loadDailyQuote() {
+  const { data } = await supabaseClient.from('quotes').select('*');
+  if (data?.length) {
+    const seed = Math.floor(Date.now() / 86400000);
+    const q = data[seed % data.length];
+    document.getElementById('daily-quote-text').textContent = q.teks;
+    document.getElementById('daily-quote-author').textContent = q.penulis ? `— ${q.penulis}` : '';
+  }
+}
+loadDailyQuote();
+
+async function loadQuotes() {
+  let query = supabaseClient.from('quotes').select('*').order('created_at', { ascending: false });
+  if (currentFilter) query = query.eq('kategori', currentFilter);
+  const { data } = await query;
+  const el = document.getElementById('quotes-list');
+  if (!data?.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><p>Belum ada quote</p></div>'; return; }
+
+  const icons = { motivasi: '💪', lucu: '😂', inside_joke: '🤫' };
+  el.innerHTML = data.map(q => `
+    <div class="card animate-slide" style="position:relative">
+      <div style="position:absolute;top:12px;right:16px"><span class="badge ${q.kategori === 'motivasi' ? 'badge-hadir' : q.kategori === 'lucu' ? 'badge-izin' : 'badge-admin'}">${icons[q.kategori] || ''} ${q.kategori}</span></div>
+      <div style="font-size:2rem;color:var(--accent-light);font-family:var(--font-display);line-height:1;margin-bottom:8px">"</div>
+      <div style="font-family:var(--font-display);font-size:1.05rem;line-height:1.6;margin-bottom:8px">${q.teks}</div>
+      <div style="font-size:.85rem;color:var(--text-secondary);font-style:italic">${q.penulis ? `— ${q.penulis}` : ''}</div>
+      ${isAdmin ? `<div class="td-actions" style="margin-top:8px"><button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteQuote('${q.id}')">🗑️ Hapus</button></div>` : ''}
+    </div>`).join('');
+}
+loadQuotes();
+
+// Filter chips
+document.querySelectorAll('.chip[data-filter]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip[data-filter]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentFilter = chip.dataset.filter;
+    loadQuotes();
+  });
+});
+
+// Modal
+const modal = document.getElementById('modal-quote');
+document.getElementById('btn-add-quote').onclick = () => {
+  document.getElementById('quote-teks').value = '';
+  document.getElementById('quote-penulis').value = '';
+  document.getElementById('quote-kategori').value = 'motivasi';
+  modal.classList.add('show');
+};
+document.getElementById('modal-quote-close').onclick = () => modal.classList.remove('show');
+document.getElementById('modal-quote-cancel').onclick = () => modal.classList.remove('show');
+
+document.getElementById('modal-quote-save').onclick = async () => {
+  const teks = document.getElementById('quote-teks').value.trim();
+  if (!teks) { App.showToast('Quote wajib diisi', 'error'); return; }
+  const { error } = await supabaseClient.from('quotes').insert({
+    teks,
+    penulis: document.getElementById('quote-penulis').value.trim() || null,
+    kategori: document.getElementById('quote-kategori').value,
+    created_by: user.id,
+  });
+  if (error) { App.showToast('Gagal: ' + error.message, 'error'); return; }
+  App.showToast('Quote ditambahkan');
+  modal.classList.remove('show');
+  loadQuotes();
+};
+
+window.deleteQuote = async (id) => {
+  if (!(await App.confirmDelete('Hapus quote ini?'))) return;
+  await supabaseClient.from('quotes').delete().eq('id', id);
+  App.showToast('Quote dihapus');
+  loadQuotes();
+};
+</script>
+</body>
+</html>

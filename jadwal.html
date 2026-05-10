@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jadwal Pelajaran – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">📅 Jadwal Pelajaran</h2>
+    </header>
+    <main class="page-content">
+      <div class="page-header">
+        <h1>Jadwal Pelajaran</h1>
+        <p>Jadwal pelajaran interaktif dengan kalender dan tampilan harian</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="harian">📋 Harian</button>
+        <button class="tab" data-tab="kalender">📅 Kalender</button>
+      </div>
+
+      <!-- Filter & Add -->
+      <div class="filter-bar">
+        <input class="form-control" type="date" id="filter-date" />
+        <button class="btn btn-primary" id="btn-add-schedule" style="display:none">+ Tambah Jadwal</button>
+        <button class="btn btn-warning" id="btn-mark-holiday" style="display:none">🎌 Tandai Libur</button>
+      </div>
+
+      <!-- Countdown Jam -->
+      <div id="current-class-info" class="glass-card" style="margin-bottom:20px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">Sedang Berlangsung</div>
+            <div id="current-class-name" style="font-weight:600;font-size:1.1rem;margin-top:4px"></div>
+          </div>
+          <div id="class-countdown" class="countdown-card" style="min-width:200px"></div>
+        </div>
+      </div>
+
+      <!-- Harian View -->
+      <div id="tab-harian">
+        <div id="schedule-date-label" style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:16px"></div>
+        <div id="schedule-list">
+          <div class="loading-state"><div class="spinner"></div><p>Memuat jadwal...</p></div>
+        </div>
+      </div>
+
+      <!-- Kalender View -->
+      <div id="tab-kalender" style="display:none">
+        <div class="calendar-nav">
+          <button class="btn btn-ghost" id="cal-prev">← Sebelumnya</button>
+          <h3 id="cal-month-label"></h3>
+          <button class="btn btn-ghost" id="cal-next">Selanjutnya →</button>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+      </div>
+
+      <!-- Modal Jadwal -->
+      <div class="modal-overlay" id="modal-schedule">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title" id="modal-schedule-title">Tambah Jadwal</h3>
+            <button class="modal-close" id="modal-schedule-close">✕</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="sched-id" />
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Tanggal</label>
+                <input class="form-control" type="date" id="sched-tanggal" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-control" id="sched-status">
+                  <option value="normal">Normal</option>
+                  <option value="libur">Libur</option>
+                  <option value="kegiatan_sekolah">Kegiatan Sekolah</option>
+                  <option value="ujian">Ujian</option>
+                  <option value="class_meeting">Class Meeting</option>
+                  <option value="pengganti">Pengganti</option>
+                  <option value="study_tour">Study Tour</option>
+                  <option value="agenda_khusus">Agenda Khusus</option>
+                </select>
+              </div>
+            </div>
+            <div id="sched-normal-fields">
+              <div class="form-group">
+                <label class="form-label">Mata Pelajaran</label>
+                <input class="form-control" type="text" id="sched-mapel" placeholder="Matematika" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Guru</label>
+                <input class="form-control" type="text" id="sched-guru" placeholder="Nama guru" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Jam Mulai</label>
+                  <input class="form-control" type="time" id="sched-mulai" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Jam Selesai</label>
+                  <input class="form-control" type="time" id="sched-selesai" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ruang Kelas</label>
+                <input class="form-control" type="text" id="sched-ruang" placeholder="XII IPA 1" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Catatan</label>
+              <textarea class="form-control" id="sched-catatan" placeholder="Catatan tambahan..." rows="2"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" id="modal-schedule-cancel">Batal</button>
+            <button class="btn btn-primary" id="modal-schedule-save">Simpan</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth();
+if (!user) throw new Error('No access');
+const isAdmin = user.profile?.role === 'admin';
+
+if (isAdmin) {
+  document.getElementById('btn-add-schedule').style.display = '';
+  document.getElementById('btn-mark-holiday').style.display = '';
+}
+
+const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const today = new Date();
+let selectedDate = today.toISOString().split('T')[0];
+let calMonth = today.getMonth();
+let calYear = today.getFullYear();
+
+document.getElementById('filter-date').value = selectedDate;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-harian').style.display = tab.dataset.tab === 'harian' ? '' : 'none';
+    document.getElementById('tab-kalender').style.display = tab.dataset.tab === 'kalender' ? '' : 'none';
+    if (tab.dataset.tab === 'kalender') renderCalendar();
+  });
+});
+
+document.getElementById('filter-date').addEventListener('change', (e) => {
+  selectedDate = e.target.value;
+  loadSchedule();
+});
+
+// Status toggle
+document.getElementById('sched-status').addEventListener('change', (e) => {
+  document.getElementById('sched-normal-fields').style.display = e.target.value === 'libur' ? 'none' : '';
+});
+
+async function loadSchedule() {
+  const el = document.getElementById('schedule-list');
+  const d = new Date(selectedDate + 'T00:00:00');
+  const dayName = days[d.getDay()];
+  document.getElementById('schedule-date-label').textContent = `${dayName}, ${App.formatDate(selectedDate)}`;
+
+  if (App.isHoliday(selectedDate)) {
+    el.innerHTML = `<div style="text-align:center;padding:40px"><span style="font-size:3rem">🎉</span><h3 style="margin-top:12px;font-family:var(--font-display)">Hari Libur Nasional</h3><p style="color:var(--text-muted)">${App.getHolidayName(selectedDate)}</p></div>`;
+    return;
+  }
+
+  const { data } = await supabaseClient.from('schedules').select('*').eq('tanggal', selectedDate).order('jam_mulai');
+
+  if (!data?.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Tidak ada jadwal untuk tanggal ini</p></div>';
+    return;
+  }
+
+  const now = new Date().toTimeString().substring(0, 5);
+  const isToday = selectedDate === today.toISOString().split('T')[0];
+
+  el.innerHTML = '<div class="schedule-grid">' + data.map(s => {
+    const isNow = isToday && now >= (s.jam_mulai||'').substring(0,5) && now < (s.jam_selesai||'').substring(0,5);
+    const statusBadge = { normal:'badge-normal', libur:'badge-libur', ujian:'badge-ujian', kegiatan_sekolah:'badge-kegiatan', class_meeting:'badge-class-meeting', pengganti:'badge-pengganti', study_tour:'badge-kegiatan', agenda_khusus:'badge-kegiatan' };
+    const statusLabel = { normal:'Normal', libur:'Libur', ujian:'Ujian', kegiatan_sekolah:'Kegiatan', class_meeting:'Class Meeting', pengganti:'Pengganti', study_tour:'Study Tour', agenda_khusus:'Agenda Khusus' };
+
+    if (isNow) {
+      const info = document.getElementById('current-class-info');
+      info.style.display = '';
+      document.getElementById('current-class-name').textContent = s.mata_pelajaran || s.catatan || 'Pelajaran';
+      updateCountdown(s.jam_selesai);
+    }
+
+    return `<div class="schedule-item ${isNow ? 'active-now' : ''} ${s.status === 'libur' ? 'holiday' : ''} animate-slide">
+      <div class="schedule-time">
+        <div class="time-start">${App.formatTime(s.jam_mulai)}</div>
+        <div class="time-end">${App.formatTime(s.jam_selesai)}</div>
+      </div>
+      <div class="schedule-info">
+        <div class="schedule-subject">${s.status === 'libur' ? '🎌 Libur' : (s.mata_pelajaran || s.catatan || '-')}</div>
+        <div class="schedule-detail">${s.guru || ''} ${s.ruang_kelas ? '• ' + s.ruang_kelas : ''} ${s.catatan && s.status !== 'libur' ? '• ' + s.catatan : ''}</div>
+      </div>
+      <div class="schedule-status"><span class="badge ${statusBadge[s.status] || ''}">${statusLabel[s.status] || s.status}</span></div>
+      ${isAdmin ? `<div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="editSchedule('${s.id}')">✏️</button><button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteSchedule('${s.id}')">🗑️</button></div>` : ''}
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function updateCountdown(endTime) {
+  const el = document.getElementById('class-countdown');
+  function tick() {
+    const now = new Date();
+    const [h, m] = (endTime || '00:00').split(':').map(Number);
+    const end = new Date(now); end.setHours(h, m, 0, 0);
+    const diff = end - now;
+    if (diff <= 0) { el.innerHTML = '<span style="font-weight:600">Selesai!</span>'; return; }
+    const mins = Math.floor(diff / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+    el.innerHTML = `<div class="countdown-numbers"><div class="countdown-unit"><div class="number">${mins}</div><div class="label">menit</div></div><div class="countdown-unit"><div class="number">${secs}</div><div class="label">detik</div></div></div>`;
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+loadSchedule();
+
+// Calendar
+function renderCalendar() {
+  const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  document.getElementById('cal-month-label').textContent = `${months[calMonth]} ${calYear}`;
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const todayStr = today.toISOString().split('T')[0];
+
+  let html = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'].map(d => `<div class="calendar-header-cell">${d}</div>`).join('');
+
+  for (let i = 0; i < firstDay; i++) html += '<div class="calendar-cell empty"></div>';
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const isToday = dateStr === todayStr;
+    const isHoliday = App.isHoliday(dateStr);
+    html += `<div class="calendar-cell ${isToday ? 'today' : ''} ${isHoliday ? 'holiday' : ''}" onclick="selectCalDate('${dateStr}')">${d}</div>`;
+  }
+
+  document.getElementById('calendar-grid').innerHTML = html;
+}
+
+document.getElementById('cal-prev').onclick = () => { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); };
+document.getElementById('cal-next').onclick = () => { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); };
+
+window.selectCalDate = (dateStr) => {
+  selectedDate = dateStr;
+  document.getElementById('filter-date').value = dateStr;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('[data-tab="harian"]').classList.add('active');
+  document.getElementById('tab-harian').style.display = '';
+  document.getElementById('tab-kalender').style.display = 'none';
+  loadSchedule();
+};
+
+// Admin: Add/Edit/Delete Schedule
+const modal = document.getElementById('modal-schedule');
+let allSchedules = [];
+
+document.getElementById('btn-add-schedule').onclick = () => {
+  document.getElementById('sched-id').value = '';
+  document.getElementById('sched-tanggal').value = selectedDate;
+  document.getElementById('sched-mapel').value = '';
+  document.getElementById('sched-guru').value = '';
+  document.getElementById('sched-mulai').value = '';
+  document.getElementById('sched-selesai').value = '';
+  document.getElementById('sched-ruang').value = '';
+  document.getElementById('sched-status').value = 'normal';
+  document.getElementById('sched-catatan').value = '';
+  document.getElementById('sched-normal-fields').style.display = '';
+  document.getElementById('modal-schedule-title').textContent = 'Tambah Jadwal';
+  modal.classList.add('show');
+};
+
+document.getElementById('btn-mark-holiday').onclick = async () => {
+  await supabaseClient.from('schedules').insert({
+    tanggal: selectedDate,
+    hari: days[new Date(selectedDate + 'T00:00:00').getDay()],
+    status: 'libur',
+    catatan: 'Hari Libur',
+    created_by: user.id
+  });
+  App.showToast('Tanggal ditandai sebagai libur');
+  loadSchedule();
+};
+
+document.getElementById('modal-schedule-close').onclick = () => modal.classList.remove('show');
+document.getElementById('modal-schedule-cancel').onclick = () => modal.classList.remove('show');
+
+window.editSchedule = async (id) => {
+  const { data: s } = await supabaseClient.from('schedules').select('*').eq('id', id).single();
+  if (!s) return;
+  document.getElementById('sched-id').value = s.id;
+  document.getElementById('sched-tanggal').value = s.tanggal;
+  document.getElementById('sched-mapel').value = s.mata_pelajaran || '';
+  document.getElementById('sched-guru').value = s.guru || '';
+  document.getElementById('sched-mulai').value = s.jam_mulai || '';
+  document.getElementById('sched-selesai').value = s.jam_selesai || '';
+  document.getElementById('sched-ruang').value = s.ruang_kelas || '';
+  document.getElementById('sched-status').value = s.status;
+  document.getElementById('sched-catatan').value = s.catatan || '';
+  document.getElementById('sched-normal-fields').style.display = s.status === 'libur' ? 'none' : '';
+  document.getElementById('modal-schedule-title').textContent = 'Edit Jadwal';
+  modal.classList.add('show');
+};
+
+window.deleteSchedule = async (id) => {
+  if (!(await App.confirmDelete('Hapus jadwal ini?'))) return;
+  await supabaseClient.from('schedules').delete().eq('id', id);
+  App.showToast('Jadwal dihapus');
+  loadSchedule();
+};
+
+document.getElementById('modal-schedule-save').onclick = async () => {
+  const id = document.getElementById('sched-id').value;
+  const tanggal = document.getElementById('sched-tanggal').value;
+  const status = document.getElementById('sched-status').value;
+  const d = new Date(tanggal + 'T00:00:00');
+
+  const record = {
+    tanggal,
+    hari: days[d.getDay()],
+    mata_pelajaran: document.getElementById('sched-mapel').value.trim() || null,
+    guru: document.getElementById('sched-guru').value.trim() || null,
+    jam_mulai: document.getElementById('sched-mulai').value || null,
+    jam_selesai: document.getElementById('sched-selesai').value || null,
+    ruang_kelas: document.getElementById('sched-ruang').value.trim() || null,
+    status,
+    catatan: document.getElementById('sched-catatan').value.trim() || null,
+    created_by: user.id,
+  };
+
+  if (!tanggal) { App.showToast('Tanggal wajib diisi', 'error'); return; }
+
+  let error;
+  if (id) {
+    ({ error } = await supabaseClient.from('schedules').update(record).eq('id', id));
+  } else {
+    ({ error } = await supabaseClient.from('schedules').insert(record));
+  }
+  if (error) { App.showToast('Gagal: ' + error.message, 'error'); return; }
+  App.showToast(id ? 'Jadwal diperbarui' : 'Jadwal ditambahkan');
+  modal.classList.remove('show');
+  loadSchedule();
+};
+</script>
+</body>
+</html>

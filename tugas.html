@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tugas – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">📝 Deadline & Tugas</h2>
+    </header>
+    <main class="page-content">
+      <div class="page-header">
+        <h1>Deadline & Tugas</h1>
+        <p>Kelola tugas kelas dengan countdown deadline</p>
+      </div>
+
+      <div class="filter-bar">
+        <select class="form-control" id="filter-mapel">
+          <option value="">Semua Mapel</option>
+        </select>
+        <select class="form-control" id="filter-status">
+          <option value="active">Aktif</option>
+          <option value="all">Semua</option>
+          <option value="expired">Kedaluwarsa</option>
+        </select>
+        <button class="btn btn-primary" id="btn-add-task" style="display:none">+ Tambah Tugas</button>
+      </div>
+
+      <div class="task-grid" id="task-list">
+        <div class="loading-state"><div class="spinner"></div><p>Memuat tugas...</p></div>
+      </div>
+
+      <!-- Modal Tugas -->
+      <div class="modal-overlay" id="modal-task">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title" id="modal-task-title">Tambah Tugas</h3>
+            <button class="modal-close" id="modal-task-close">✕</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="task-id" />
+            <div class="form-group">
+              <label class="form-label">Judul Tugas</label>
+              <input class="form-control" type="text" id="task-judul" placeholder="Judul tugas" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Mata Pelajaran</label>
+                <input class="form-control" type="text" id="task-mapel" placeholder="Matematika" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Guru</label>
+                <input class="form-control" type="text" id="task-guru" placeholder="Nama guru" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Deskripsi</label>
+              <textarea class="form-control" id="task-desc" placeholder="Deskripsi tugas..." rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Deadline</label>
+              <input class="form-control" type="datetime-local" id="task-deadline" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Lampiran (opsional)</label>
+              <input class="form-control" type="file" id="task-file" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" id="modal-task-cancel">Batal</button>
+            <button class="btn btn-primary" id="modal-task-save">Simpan</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth();
+if (!user) throw new Error('No access');
+const isAdmin = user.profile?.role === 'admin';
+
+if (isAdmin) document.getElementById('btn-add-task').style.display = '';
+
+async function loadTasks() {
+  const mapelFilter = document.getElementById('filter-mapel').value;
+  const statusFilter = document.getElementById('filter-status').value;
+  let query = supabaseClient.from('assignments').select('*').order('deadline');
+
+  if (statusFilter === 'active') query = query.gte('deadline', new Date().toISOString());
+  else if (statusFilter === 'expired') query = query.lt('deadline', new Date().toISOString());
+  if (mapelFilter) query = query.eq('mata_pelajaran', mapelFilter);
+
+  const { data } = await query;
+  const el = document.getElementById('task-list');
+
+  if (!data?.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><p>Tidak ada tugas</p></div>'; return; }
+
+  // Populate filter
+  const mapels = [...new Set(data.map(t => t.mata_pelajaran))];
+  const filterEl = document.getElementById('filter-mapel');
+  if (filterEl.options.length <= 1) {
+    mapels.forEach(m => { const opt = document.createElement('option'); opt.value = m; opt.textContent = m; filterEl.appendChild(opt); });
+  }
+
+  el.innerHTML = data.map(t => {
+    const cd = App.getCountdown(t.deadline);
+    const urgencyClass = cd.expired ? 'urgent' : cd.days <= 3 ? 'warning' : '';
+    const deadlineClass = cd.expired ? 'overdue' : cd.days <= 3 ? 'soon' : '';
+    return `<div class="task-card ${urgencyClass} animate-slide hover-lift">
+      <div class="task-header">
+        <div class="task-title">${t.judul}</div>
+        <span class="task-mapel">${t.mata_pelajaran}</span>
+      </div>
+      <div class="task-desc">${t.deskripsi || 'Tidak ada deskripsi'}</div>
+      <div class="task-footer">
+        <span class="task-deadline ${deadlineClass}">⏰ ${cd.expired ? 'Kedaluwarsa' : cd.text}</span>
+        <span>${t.guru || ''}</span>
+      </div>
+      ${t.lampiran_url ? `<div style="margin-top:8px"><a href="${t.lampiran_url}" target="_blank" class="btn btn-ghost btn-sm">📎 ${t.lampiran_name || 'Lampiran'}</a></div>` : ''}
+      ${isAdmin ? `<div class="td-actions" style="margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="editTask('${t.id}')">✏️ Edit</button><button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteTask('${t.id}')">🗑️</button></div>` : ''}
+    </div>`;
+  }).join('');
+}
+loadTasks();
+
+document.getElementById('filter-mapel').addEventListener('change', loadTasks);
+document.getElementById('filter-status').addEventListener('change', loadTasks);
+
+// Modal
+const modal = document.getElementById('modal-task');
+document.getElementById('btn-add-task').onclick = () => {
+  document.getElementById('task-id').value = '';
+  document.getElementById('task-judul').value = '';
+  document.getElementById('task-mapel').value = '';
+  document.getElementById('task-guru').value = '';
+  document.getElementById('task-desc').value = '';
+  document.getElementById('task-deadline').value = '';
+  document.getElementById('modal-task-title').textContent = 'Tambah Tugas';
+  modal.classList.add('show');
+};
+document.getElementById('modal-task-close').onclick = () => modal.classList.remove('show');
+document.getElementById('modal-task-cancel').onclick = () => modal.classList.remove('show');
+
+window.editTask = async (id) => {
+  const { data: t } = await supabaseClient.from('assignments').select('*').eq('id', id).single();
+  if (!t) return;
+  document.getElementById('task-id').value = t.id;
+  document.getElementById('task-judul').value = t.judul;
+  document.getElementById('task-mapel').value = t.mata_pelajaran;
+  document.getElementById('task-guru').value = t.guru || '';
+  document.getElementById('task-desc').value = t.deskripsi || '';
+  document.getElementById('task-deadline').value = t.deadline ? new Date(t.deadline).toISOString().slice(0, 16) : '';
+  document.getElementById('modal-task-title').textContent = 'Edit Tugas';
+  modal.classList.add('show');
+};
+
+window.deleteTask = async (id) => {
+  if (!(await App.confirmDelete('Hapus tugas ini?'))) return;
+  await supabaseClient.from('assignments').delete().eq('id', id);
+  App.showToast('Tugas dihapus');
+  loadTasks();
+};
+
+document.getElementById('modal-task-save').onclick = async () => {
+  const id = document.getElementById('task-id').value;
+  const judul = document.getElementById('task-judul').value.trim();
+  const mata_pelajaran = document.getElementById('task-mapel').value.trim();
+  const guru = document.getElementById('task-guru').value.trim();
+  const deskripsi = document.getElementById('task-desc').value.trim();
+  const deadline = document.getElementById('task-deadline').value;
+  const fileInput = document.getElementById('task-file');
+
+  if (!judul || !mata_pelajaran || !deadline) { App.showToast('Judul, mapel, dan deadline wajib diisi', 'error'); return; }
+
+  let lampiran_url = null, lampiran_name = null;
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const fileName = `${Date.now()}_${file.name}`;
+    const { error: uploadErr } = await supabaseClient.storage.from('assignments').upload(fileName, file);
+    if (!uploadErr) {
+      const { data: urlData } = supabaseClient.storage.from('assignments').getPublicUrl(fileName);
+      lampiran_url = urlData.publicUrl;
+      lampiran_name = file.name;
+    }
+  }
+
+  const record = { judul, mata_pelajaran, guru, deskripsi, deadline: new Date(deadline).toISOString(), created_by: user.id };
+  if (lampiran_url) { record.lampiran_url = lampiran_url; record.lampiran_name = lampiran_name; }
+
+  let error;
+  if (id) { ({ error } = await supabaseClient.from('assignments').update(record).eq('id', id)); }
+  else { ({ error } = await supabaseClient.from('assignments').insert(record)); }
+  if (error) { App.showToast('Gagal: ' + error.message, 'error'); return; }
+
+  App.showToast(id ? 'Tugas diperbarui' : 'Tugas ditambahkan');
+  modal.classList.remove('show');
+  loadTasks();
+};
+</script>
+</body>
+</html>

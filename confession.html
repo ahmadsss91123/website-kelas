@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confession – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">💌 Confession</h2>
+    </header>
+    <main class="page-content">
+      <div class="page-header">
+        <h1>Confession / Pesan Anonim</h1>
+        <p>Kirim pesan, confession, kritik, atau saran secara anonim</p>
+      </div>
+
+      <!-- Form Kirim -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-header">
+          <h3 class="card-title">✍️ Kirim Pesan Anonim</h3>
+        </div>
+        <div class="form-group">
+          <textarea class="form-control" id="confession-text" placeholder="Tulis pesan anonim kamu di sini..." rows="3"></textarea>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <select class="form-control" id="confession-kategori" style="max-width:200px">
+            <option value="confession">💌 Confession</option>
+            <option value="kritik">📣 Kritik</option>
+            <option value="saran">💡 Saran</option>
+          </select>
+          <button class="btn btn-primary" id="btn-send-confession">Kirim Anonim</button>
+        </div>
+        <p class="form-hint" style="margin-top:8px">Identitas kamu tidak akan ditampilkan. Pesan akan dimoderasi admin sebelum ditampilkan.</p>
+      </div>
+
+      <!-- Admin Tab -->
+      <div class="tabs" id="admin-tabs" style="display:none">
+        <button class="tab active" data-tab="approved">Approved</button>
+        <button class="tab" data-tab="pending">Pending</button>
+        <button class="tab" data-tab="rejected">Rejected</button>
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-bar">
+        <select class="form-control" id="filter-kategori" style="max-width:180px">
+          <option value="">Semua Kategori</option>
+          <option value="confession">Confession</option>
+          <option value="kritik">Kritik</option>
+          <option value="saran">Saran</option>
+        </select>
+      </div>
+
+      <div class="confession-list" id="confession-list">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth();
+if (!user) throw new Error('No access');
+const isAdmin = user.profile?.role === 'admin';
+let currentTab = 'approved';
+
+if (isAdmin) {
+  document.getElementById('admin-tabs').style.display = '';
+  document.querySelectorAll('#admin-tabs .tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#admin-tabs .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentTab = tab.dataset.tab;
+      loadConfessions();
+    });
+  });
+}
+
+async function loadConfessions() {
+  const kategori = document.getElementById('filter-kategori').value;
+  let query = supabaseClient.from('confessions').select('*').order('created_at', { ascending: false });
+
+  if (isAdmin) {
+    query = query.eq('status', currentTab);
+  } else {
+    query = query.eq('status', 'approved');
+  }
+  if (kategori) query = query.eq('kategori', kategori);
+
+  const { data } = await query;
+  const el = document.getElementById('confession-list');
+
+  if (!data?.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">💌</div><p>Belum ada confession</p></div>'; return; }
+
+  // Check user likes
+  const { data: userLikes } = await supabaseClient.from('confession_likes').select('confession_id').eq('user_id', user.id);
+  const likedIds = new Set((userLikes || []).map(l => l.confession_id));
+
+  const kategoriIcons = { confession: '💌', kritik: '📣', saran: '💡' };
+
+  el.innerHTML = data.map(c => `
+    <div class="confession-card animate-slide">
+      <div style="margin-bottom:8px"><span class="badge ${c.kategori === 'confession' ? 'badge-admin' : c.kategori === 'kritik' ? 'badge-alpha' : 'badge-hadir'}">${kategoriIcons[c.kategori] || ''} ${c.kategori}</span></div>
+      <div class="confession-text">${App.filterBadWords(c.pesan)}</div>
+      <div class="confession-meta">
+        <span>${App.timeAgo(c.created_at)}</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="like-btn ${likedIds.has(c.id) ? 'liked' : ''}" onclick="toggleLike('${c.id}', ${likedIds.has(c.id)})">❤️ ${c.likes || 0}</button>
+          ${isAdmin && currentTab === 'pending' ? `
+            <button class="btn btn-success btn-sm" onclick="moderateConfession('${c.id}','approved')">✅ Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="moderateConfession('${c.id}','rejected')">❌ Reject</button>
+          ` : ''}
+          ${isAdmin ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteConfession('${c.id}')">🗑️</button>` : ''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+loadConfessions();
+document.getElementById('filter-kategori').addEventListener('change', loadConfessions);
+
+// Send
+document.getElementById('btn-send-confession').onclick = async () => {
+  const pesan = document.getElementById('confession-text').value.trim();
+  const kategori = document.getElementById('confession-kategori').value;
+  if (!pesan) { App.showToast('Tulis pesan terlebih dahulu', 'error'); return; }
+  if (pesan.length < 5) { App.showToast('Pesan terlalu pendek', 'error'); return; }
+
+  const { error } = await supabaseClient.from('confessions').insert({
+    pesan: App.filterBadWords(pesan),
+    kategori,
+    status: 'pending',
+  });
+  if (error) { App.showToast('Gagal: ' + error.message, 'error'); return; }
+  document.getElementById('confession-text').value = '';
+  App.showToast('Pesan terkirim! Menunggu moderasi admin.');
+  await App.addXP(user.id, 5, 'Kirim confession');
+};
+
+// Like
+window.toggleLike = async (confessionId, isLiked) => {
+  if (isLiked) {
+    await supabaseClient.from('confession_likes').delete().eq('confession_id', confessionId).eq('user_id', user.id);
+    await supabaseClient.from('confessions').update({ likes: supabaseClient.rpc ? undefined : 0 }).eq('id', confessionId);
+    // Decrement
+    const { data: c } = await supabaseClient.from('confessions').select('likes').eq('id', confessionId).single();
+    await supabaseClient.from('confessions').update({ likes: Math.max(0, (c?.likes || 1) - 1) }).eq('id', confessionId);
+  } else {
+    await supabaseClient.from('confession_likes').insert({ confession_id: confessionId, user_id: user.id });
+    const { data: c } = await supabaseClient.from('confessions').select('likes').eq('id', confessionId).single();
+    await supabaseClient.from('confessions').update({ likes: (c?.likes || 0) + 1 }).eq('id', confessionId);
+  }
+  loadConfessions();
+};
+
+// Moderate
+window.moderateConfession = async (id, status) => {
+  await supabaseClient.from('confessions').update({ status }).eq('id', id);
+  App.showToast(`Confession ${status}`);
+  loadConfessions();
+};
+
+window.deleteConfession = async (id) => {
+  if (!(await App.confirmDelete('Hapus confession ini?'))) return;
+  await supabaseClient.from('confessions').delete().eq('id', id);
+  App.showToast('Confession dihapus');
+  loadConfessions();
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bank Materi – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">📚 Bank Materi</h2>
+    </header>
+    <main class="page-content">
+      <div class="page-header">
+        <h1>Bank Materi</h1>
+        <p>Upload dan download materi pelajaran</p>
+      </div>
+
+      <div class="filter-bar">
+        <div class="search-input">
+          <input class="form-control" type="text" id="search-materi" placeholder="Cari materi..." />
+        </div>
+        <select class="form-control" id="filter-mapel"><option value="">Semua Mapel</option></select>
+        <button class="btn btn-primary" id="btn-upload-materi">+ Upload Materi</button>
+      </div>
+
+      <div class="material-grid" id="material-list">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Modal Upload -->
+      <div class="modal-overlay" id="modal-materi">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Upload Materi</h3>
+            <button class="modal-close" id="modal-materi-close">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Judul Materi</label>
+              <input class="form-control" type="text" id="materi-judul" placeholder="Judul materi" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mata Pelajaran</label>
+              <input class="form-control" type="text" id="materi-mapel" placeholder="Matematika" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Deskripsi (opsional)</label>
+              <textarea class="form-control" id="materi-desc" placeholder="Deskripsi singkat..." rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">File (PDF, Gambar, Dokumen)</label>
+              <div class="upload-area" id="upload-area">
+                <div class="upload-icon">📁</div>
+                <p>Klik atau drag file ke sini</p>
+                <p class="form-hint">Maks 50MB • PDF, DOC, PPT, XLS, JPG, PNG</p>
+              </div>
+              <input type="file" id="materi-file" style="display:none" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif" />
+              <div id="file-preview" style="margin-top:8px;display:none">
+                <span id="file-name" style="font-size:.85rem;color:var(--text-secondary)"></span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" id="modal-materi-cancel">Batal</button>
+            <button class="btn btn-primary" id="modal-materi-save">Upload</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth();
+if (!user) throw new Error('No access');
+const isAdmin = user.profile?.role === 'admin';
+
+function getFileIcon(type) {
+  if (!type) return '📄';
+  if (type.includes('pdf')) return '📕';
+  if (type.includes('image')) return '🖼️';
+  if (type.includes('word') || type.includes('doc')) return '📘';
+  if (type.includes('presentation') || type.includes('ppt')) return '📙';
+  if (type.includes('sheet') || type.includes('xls')) return '📗';
+  return '📄';
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '0 B';
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+}
+
+async function loadMaterials() {
+  const search = document.getElementById('search-materi').value.trim().toLowerCase();
+  const mapel = document.getElementById('filter-mapel').value;
+  let query = supabaseClient.from('materials').select('*').order('created_at', { ascending: false });
+  if (mapel) query = query.eq('mata_pelajaran', mapel);
+
+  const { data } = await query;
+  const el = document.getElementById('material-list');
+  let filtered = data || [];
+  if (search) filtered = filtered.filter(m => m.judul.toLowerCase().includes(search) || m.mata_pelajaran.toLowerCase().includes(search));
+
+  // Populate filter
+  if (data?.length) {
+    const mapels = [...new Set(data.map(m => m.mata_pelajaran))];
+    const filterEl = document.getElementById('filter-mapel');
+    if (filterEl.options.length <= 1) {
+      mapels.forEach(m => { const opt = document.createElement('option'); opt.value = m; opt.textContent = m; filterEl.appendChild(opt); });
+    }
+  }
+
+  if (!filtered.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><p>Belum ada materi</p></div>'; return; }
+
+  el.innerHTML = filtered.map(m => `
+    <div class="material-card hover-lift animate-slide">
+      <div class="material-icon">${getFileIcon(m.file_type)}</div>
+      <div class="material-title">${m.judul}</div>
+      <div class="material-mapel">${m.mata_pelajaran}</div>
+      <div class="material-desc">${m.deskripsi || ''}</div>
+      <div class="material-footer">
+        <span>${m.uploader_name || 'Anonim'} • ${formatSize(m.file_size)}</span>
+        <div>
+          <a href="${m.file_url}" target="_blank" class="btn btn-primary btn-sm">⬇️ Download</a>
+          ${isAdmin || m.uploaded_by === user.id ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteMateri('${m.id}','${m.file_name}')">🗑️</button>` : ''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+loadMaterials();
+
+document.getElementById('search-materi').addEventListener('input', loadMaterials);
+document.getElementById('filter-mapel').addEventListener('change', loadMaterials);
+
+// Upload area
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('materi-file');
+uploadArea.onclick = () => fileInput.click();
+uploadArea.ondragover = (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); };
+uploadArea.ondragleave = () => uploadArea.classList.remove('dragover');
+uploadArea.ondrop = (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); fileInput.files = e.dataTransfer.files; showPreview(); };
+fileInput.onchange = showPreview;
+
+function showPreview() {
+  if (fileInput.files.length > 0) {
+    document.getElementById('file-preview').style.display = '';
+    document.getElementById('file-name').textContent = fileInput.files[0].name;
+  }
+}
+
+// Modal
+const modal = document.getElementById('modal-materi');
+document.getElementById('btn-upload-materi').onclick = () => {
+  document.getElementById('materi-judul').value = '';
+  document.getElementById('materi-mapel').value = '';
+  document.getElementById('materi-desc').value = '';
+  fileInput.value = '';
+  document.getElementById('file-preview').style.display = 'none';
+  modal.classList.add('show');
+};
+document.getElementById('modal-materi-close').onclick = () => modal.classList.remove('show');
+document.getElementById('modal-materi-cancel').onclick = () => modal.classList.remove('show');
+
+document.getElementById('modal-materi-save').onclick = async () => {
+  const judul = document.getElementById('materi-judul').value.trim();
+  const mata_pelajaran = document.getElementById('materi-mapel').value.trim();
+  const deskripsi = document.getElementById('materi-desc').value.trim();
+
+  if (!judul || !mata_pelajaran) { App.showToast('Judul dan mapel wajib diisi', 'error'); return; }
+  if (!fileInput.files.length) { App.showToast('Pilih file untuk diupload', 'error'); return; }
+
+  const file = fileInput.files[0];
+  const fileName = `${Date.now()}_${file.name}`;
+
+  App.showToast('Mengupload file...', 'info');
+  const { error: uploadErr } = await supabaseClient.storage.from('materials').upload(fileName, file);
+  if (uploadErr) { App.showToast('Gagal upload: ' + uploadErr.message, 'error'); return; }
+
+  const { data: urlData } = supabaseClient.storage.from('materials').getPublicUrl(fileName);
+
+  const { error } = await supabaseClient.from('materials').insert({
+    judul, mata_pelajaran, deskripsi,
+    file_url: urlData.publicUrl,
+    file_name: fileName,
+    file_type: file.type,
+    file_size: file.size,
+    uploaded_by: user.id,
+    uploader_name: user.profile?.full_name || user.email,
+  });
+
+  if (error) { App.showToast('Gagal: ' + error.message, 'error'); return; }
+
+  await App.addXP(user.id, 15, 'Upload materi');
+  App.showToast('Materi berhasil diupload! +15 XP');
+  modal.classList.remove('show');
+  loadMaterials();
+};
+
+window.deleteMateri = async (id, fileName) => {
+  if (!(await App.confirmDelete('Hapus materi ini?'))) return;
+  await supabaseClient.storage.from('materials').remove([fileName]);
+  await supabaseClient.from('materials').delete().eq('id', id);
+  App.showToast('Materi dihapus');
+  loadMaterials();
+};
+</script>
+</body>
+</html>

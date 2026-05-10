@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pengumuman – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">📢 Pengumuman</h2>
+    </header>
+    <main class="page-content">
+      <div class="page-header">
+        <h1>Pengumuman Kelas</h1>
+        <p>Pengumuman penting dari admin kelas</p>
+      </div>
+
+      <div class="filter-bar">
+        <button class="btn btn-primary" id="btn-add-announcement" style="display:none">+ Buat Pengumuman</button>
+      </div>
+
+      <div class="announcement-list" id="announcement-list">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Modal -->
+      <div class="modal-overlay" id="modal-announcement">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title" id="modal-ann-title">Buat Pengumuman</h3>
+            <button class="modal-close" id="modal-ann-close">✕</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="ann-id" />
+            <div class="form-group">
+              <label class="form-label">Judul</label>
+              <input class="form-control" type="text" id="ann-judul" placeholder="Judul pengumuman" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Isi Pengumuman</label>
+              <textarea class="form-control" id="ann-isi" placeholder="Isi pengumuman..." rows="5"></textarea>
+            </div>
+            <div class="form-group">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="ann-pinned" />
+                <span class="form-label" style="margin:0">📌 Pin pengumuman ini</span>
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" id="modal-ann-cancel">Batal</button>
+            <button class="btn btn-primary" id="modal-ann-save">Simpan</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth();
+if (!user) throw new Error('No access');
+const isAdmin = user.profile?.role === 'admin';
+if (isAdmin) document.getElementById('btn-add-announcement').style.display = '';
+
+async function loadAnnouncements() {
+  const { data } = await supabaseClient.from('announcements').select('*')
+    .order('is_pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+  const el = document.getElementById('announcement-list');
+  if (!data?.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📢</div><p>Belum ada pengumuman</p></div>'; return; }
+
+  el.innerHTML = data.map(a => `
+    <div class="announcement-card ${a.is_pinned ? 'pinned' : ''} animate-slide">
+      <div class="announcement-title">${a.is_pinned ? '📌 ' : ''}${a.judul}</div>
+      <div class="announcement-body">${a.isi}</div>
+      <div class="announcement-meta">
+        <span>${a.author_name || 'Admin'} • ${App.timeAgo(a.created_at)}</span>
+        ${isAdmin ? `<div class="td-actions">
+          <button class="btn btn-ghost btn-sm" onclick="togglePin('${a.id}', ${a.is_pinned})">${a.is_pinned ? '📌 Unpin' : '📌 Pin'}</button>
+          <button class="btn btn-ghost btn-sm" onclick="editAnnouncement('${a.id}')">✏️ Edit</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteAnnouncement('${a.id}')">🗑️</button>
+        </div>` : ''}
+      </div>
+    </div>`).join('');
+}
+loadAnnouncements();
+
+// Modal
+const modal = document.getElementById('modal-announcement');
+document.getElementById('btn-add-announcement').onclick = () => {
+  document.getElementById('ann-id').value = '';
+  document.getElementById('ann-judul').value = '';
+  document.getElementById('ann-isi').value = '';
+  document.getElementById('ann-pinned').checked = false;
+  document.getElementById('modal-ann-title').textContent = 'Buat Pengumuman';
+  modal.classList.add('show');
+};
+document.getElementById('modal-ann-close').onclick = () => modal.classList.remove('show');
+document.getElementById('modal-ann-cancel').onclick = () => modal.classList.remove('show');
+
+window.editAnnouncement = async (id) => {
+  const { data: a } = await supabaseClient.from('announcements').select('*').eq('id', id).single();
+  if (!a) return;
+  document.getElementById('ann-id').value = a.id;
+  document.getElementById('ann-judul').value = a.judul;
+  document.getElementById('ann-isi').value = a.isi;
+  document.getElementById('ann-pinned').checked = a.is_pinned;
+  document.getElementById('modal-ann-title').textContent = 'Edit Pengumuman';
+  modal.classList.add('show');
+};
+
+document.getElementById('modal-ann-save').onclick = async () => {
+  const id = document.getElementById('ann-id').value;
+  const judul = document.getElementById('ann-judul').value.trim();
+  const isi = document.getElementById('ann-isi').value.trim();
+  const is_pinned = document.getElementById('ann-pinned').checked;
+
+  if (!judul || !isi) { App.showToast('Judul dan isi wajib diisi', 'error'); return; }
+
+  const record = { judul, isi, is_pinned, author_name: user.profile?.full_name || user.email, created_by: user.id };
+
+  let error;
+  if (id) { ({ error } = await supabaseClient.from('announcements').update(record).eq('id', id)); }
+  else { ({ error } = await supabaseClient.from('announcements').insert(record)); }
+  if (error) { App.showToast('Gagal: ' + error.message, 'error'); return; }
+
+  App.showToast(id ? 'Pengumuman diperbarui' : 'Pengumuman dibuat');
+  modal.classList.remove('show');
+  loadAnnouncements();
+};
+
+window.togglePin = async (id, isPinned) => {
+  await supabaseClient.from('announcements').update({ is_pinned: !isPinned }).eq('id', id);
+  App.showToast(isPinned ? 'Pengumuman di-unpin' : 'Pengumuman di-pin');
+  loadAnnouncements();
+};
+
+window.deleteAnnouncement = async (id) => {
+  if (!(await App.confirmDelete('Hapus pengumuman ini?'))) return;
+  await supabaseClient.from('announcements').delete().eq('id', id);
+  App.showToast('Pengumuman dihapus');
+  loadAnnouncements();
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polling – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">🗳️ Polling / Voting</h2>
+    </header>
+    <main class="page-content">
+      <div class="page-header">
+        <h1>Polling / Voting</h1>
+        <p>Vote untuk keputusan kelas bersama</p>
+      </div>
+
+      <div class="filter-bar">
+        <div class="btn-group">
+          <button class="chip active" data-filter="active">Aktif</button>
+          <button class="chip" data-filter="all">Semua</button>
+        </div>
+        <button class="btn btn-primary" id="btn-add-poll" style="display:none">+ Buat Polling</button>
+      </div>
+
+      <div id="polls-list">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Modal Polling -->
+      <div class="modal-overlay" id="modal-poll">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Buat Polling</h3>
+            <button class="modal-close" id="modal-poll-close">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Judul Polling</label>
+              <input class="form-control" type="text" id="poll-judul" placeholder="Voting tema class meeting" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Deskripsi (opsional)</label>
+              <textarea class="form-control" id="poll-desc" placeholder="Deskripsi..." rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pilihan (satu per baris)</label>
+              <textarea class="form-control" id="poll-options" placeholder="Pilihan 1&#10;Pilihan 2&#10;Pilihan 3" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Batas Waktu (opsional)</label>
+              <input class="form-control" type="datetime-local" id="poll-ends" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" id="modal-poll-cancel">Batal</button>
+            <button class="btn btn-primary" id="modal-poll-save">Buat</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth();
+if (!user) throw new Error('No access');
+const isAdmin = user.profile?.role === 'admin';
+if (isAdmin) document.getElementById('btn-add-poll').style.display = '';
+
+let filterActive = true;
+
+async function loadPolls() {
+  let query = supabaseClient.from('polls').select('*, poll_options(*)').order('created_at', { ascending: false });
+  if (filterActive) query = query.eq('is_active', true);
+  const { data: polls } = await query;
+  const el = document.getElementById('polls-list');
+  if (!polls?.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🗳️</div><p>Belum ada polling</p></div>'; return; }
+
+  // Get user votes
+  const { data: userVotes } = await supabaseClient.from('poll_votes').select('poll_id, option_id').eq('user_id', user.id);
+  const votedPolls = {};
+  (userVotes || []).forEach(v => { votedPolls[v.poll_id] = v.option_id; });
+
+  el.innerHTML = polls.map(p => {
+    const totalVotes = p.poll_options.reduce((s, o) => s + (o.votes || 0), 0);
+    const userVoted = votedPolls[p.id];
+    const hasVoted = !!userVoted;
+
+    return `<div class="poll-card animate-slide">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div class="poll-title">${p.judul}</div>
+        <span class="badge ${p.is_active ? 'badge-hadir' : 'badge-pengunjung'}">${p.is_active ? 'Aktif' : 'Selesai'}</span>
+      </div>
+      ${p.deskripsi ? `<p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:16px">${p.deskripsi}</p>` : ''}
+      ${p.poll_options.map(o => {
+        const pct = totalVotes ? Math.round(o.votes / totalVotes * 100) : 0;
+        const isSelected = userVoted === o.id;
+        return `<div class="poll-option ${isSelected ? 'selected' : ''}" onclick="${!hasVoted && p.is_active ? `vote('${p.id}','${o.id}')` : ''}">
+          <div class="poll-bar" style="width:${hasVoted ? pct : 0}%"></div>
+          <div class="poll-label"><span>${isSelected ? '✅ ' : ''}${o.teks}</span>${hasVoted ? `<span class="poll-pct">${pct}%</span>` : ''}</div>
+        </div>`;
+      }).join('')}
+      <div class="poll-total">${totalVotes} suara${p.ends_at ? ` • Berakhir ${App.formatDateTime(p.ends_at)}` : ''}</div>
+      ${isAdmin ? `<div class="td-actions" style="margin-top:8px">
+        <button class="btn btn-ghost btn-sm" onclick="togglePoll('${p.id}', ${p.is_active})">${p.is_active ? '⏹️ Tutup' : '▶️ Buka'}</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deletePoll('${p.id}')">🗑️</button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+loadPolls();
+
+// Filter
+document.querySelectorAll('.chip[data-filter]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip[data-filter]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    filterActive = chip.dataset.filter === 'active';
+    loadPolls();
+  });
+});
+
+// Vote
+window.vote = async (pollId, optionId) => {
+  const { error } = await supabaseClient.from('poll_votes').insert({ poll_id: pollId, option_id: optionId, user_id: user.id });
+  if (error) {
+    if (error.message.includes('duplicate') || error.message.includes('unique')) {
+      App.showToast('Kamu sudah voting di polling ini', 'error');
+    } else {
+      App.showToast('Gagal: ' + error.message, 'error');
+    }
+    return;
+  }
+  // Update vote count
+  const { data: opt } = await supabaseClient.from('poll_options').select('votes').eq('id', optionId).single();
+  await supabaseClient.from('poll_options').update({ votes: (opt?.votes || 0) + 1 }).eq('id', optionId);
+  await App.addXP(user.id, 3, 'Ikut voting');
+  App.showToast('Vote berhasil! +3 XP');
+  loadPolls();
+};
+
+// Admin
+window.togglePoll = async (id, isActive) => {
+  await supabaseClient.from('polls').update({ is_active: !isActive }).eq('id', id);
+  App.showToast(isActive ? 'Polling ditutup' : 'Polling dibuka');
+  loadPolls();
+};
+
+window.deletePoll = async (id) => {
+  if (!(await App.confirmDelete('Hapus polling ini?'))) return;
+  await supabaseClient.from('poll_votes').delete().eq('poll_id', id);
+  await supabaseClient.from('poll_options').delete().eq('poll_id', id);
+  await supabaseClient.from('polls').delete().eq('id', id);
+  App.showToast('Polling dihapus');
+  loadPolls();
+};
+
+// Modal
+const modal = document.getElementById('modal-poll');
+document.getElementById('btn-add-poll').onclick = () => {
+  document.getElementById('poll-judul').value = '';
+  document.getElementById('poll-desc').value = '';
+  document.getElementById('poll-options').value = '';
+  document.getElementById('poll-ends').value = '';
+  modal.classList.add('show');
+};
+document.getElementById('modal-poll-close').onclick = () => modal.classList.remove('show');
+document.getElementById('modal-poll-cancel').onclick = () => modal.classList.remove('show');
+
+document.getElementById('modal-poll-save').onclick = async () => {
+  const judul = document.getElementById('poll-judul').value.trim();
+  const deskripsi = document.getElementById('poll-desc').value.trim();
+  const optionsText = document.getElementById('poll-options').value.trim();
+  const endsAt = document.getElementById('poll-ends').value;
+
+  if (!judul) { App.showToast('Judul wajib diisi', 'error'); return; }
+  const options = optionsText.split('\n').map(o => o.trim()).filter(o => o);
+  if (options.length < 2) { App.showToast('Minimal 2 pilihan', 'error'); return; }
+
+  const { data: poll, error } = await supabaseClient.from('polls').insert({
+    judul, deskripsi,
+    ends_at: endsAt ? new Date(endsAt).toISOString() : null,
+    created_by: user.id,
+  }).select().single();
+
+  if (error) { App.showToast('Gagal: ' + error.message, 'error'); return; }
+
+  const optionRecords = options.map(o => ({ poll_id: poll.id, teks: o }));
+  await supabaseClient.from('poll_options').insert(optionRecords);
+
+  App.showToast('Polling dibuat');
+  modal.classList.remove('show');
+  loadPolls();
+};
+</script>
+</body>
+</html>

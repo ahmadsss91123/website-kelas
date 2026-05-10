@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profil Saya – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">👤 Profil Saya</h2>
+    </header>
+    <main class="page-content">
+      <!-- Profile Header -->
+      <div class="profile-header">
+        <div class="profile-avatar" id="profile-avatar">U</div>
+        <div>
+          <div class="profile-name" id="profile-name">Loading...</div>
+          <div id="profile-role"></div>
+          <div style="display:flex;gap:12px;margin-top:8px;align-items:center">
+            <div id="profile-level" style="font-size:.88rem;color:var(--text-secondary)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- XP Progress -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-header">
+          <h3 class="card-title">⭐ Progress XP</h3>
+        </div>
+        <div id="xp-progress"></div>
+      </div>
+
+      <!-- Streak -->
+      <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+        <div class="streak-display" id="streak-login">
+          <span class="streak-fire">🔥</span>
+          <div><div class="streak-num">0</div><div class="streak-label">Login Streak</div></div>
+        </div>
+        <div class="streak-display" style="background:linear-gradient(135deg, #2E86DE, #54A0FF);" id="streak-hadir">
+          <span class="streak-fire">📋</span>
+          <div><div class="streak-num">0</div><div class="streak-label">Hadir Streak</div></div>
+        </div>
+        <div class="streak-display" style="background:linear-gradient(135deg, #1E8449, #27AE60);" id="streak-kas">
+          <span class="streak-fire">💰</span>
+          <div><div class="streak-num">0</div><div class="streak-label">Kas Streak</div></div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="profile-stats-grid" id="stats-grid">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Badges -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-header">
+          <h3 class="card-title">🏅 Achievement & Badge</h3>
+        </div>
+        <div class="badges-grid" id="badges-grid">
+          <div class="loading-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- XP History -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📊 Riwayat XP Terbaru</h3>
+        </div>
+        <div id="xp-history">
+          <div class="loading-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth();
+if (!user) throw new Error('No access');
+const profile = user.profile;
+
+// Profile header
+document.getElementById('profile-avatar').textContent = (profile?.full_name || 'U')[0].toUpperCase();
+document.getElementById('profile-name').textContent = profile?.full_name || user.email;
+document.getElementById('profile-role').innerHTML = App.getRoleBadge(profile?.role);
+
+// XP Progress
+const xpData = App.getLevelProgress(profile?.xp || 0);
+document.getElementById('profile-level').innerHTML = `${App.getLevelBadge(xpData.level)} Level ${xpData.level}`;
+document.getElementById('xp-progress').innerHTML = `
+  <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:6px">
+    <span>Level ${xpData.level}</span>
+    <span>${profile?.xp || 0} / ${xpData.next} XP</span>
+  </div>
+  <div class="xp-bar-container">
+    <div class="xp-bar" style="width:${xpData.progress}%"></div>
+  </div>
+  <p class="form-hint" style="margin-top:6px">${Math.round(xpData.next - (profile?.xp || 0))} XP lagi menuju Level ${xpData.level + 1}</p>
+`;
+
+// Streaks
+document.querySelector('#streak-login .streak-num').textContent = profile?.streak_login || 0;
+document.querySelector('#streak-hadir .streak-num').textContent = profile?.streak_hadir || 0;
+document.querySelector('#streak-kas .streak-num').textContent = profile?.streak_kas || 0;
+
+// Stats
+async function loadStats() {
+  const [hadirRes, izinRes, sakitRes, alphaRes] = await Promise.all([
+    supabaseClient.from('attendances').select('id', { count: 'exact', head: true }).eq('student_id', user.id).eq('status', 'Hadir'),
+    supabaseClient.from('attendances').select('id', { count: 'exact', head: true }).eq('student_id', user.id).eq('status', 'Izin'),
+    supabaseClient.from('attendances').select('id', { count: 'exact', head: true }).eq('student_id', user.id).eq('status', 'Sakit'),
+    supabaseClient.from('attendances').select('id', { count: 'exact', head: true }).eq('student_id', user.id).eq('status', 'Alpha'),
+  ]);
+
+  const stats = [
+    { label: 'Total Hadir', value: hadirRes.count || 0, icon: '✅' },
+    { label: 'Total Izin', value: izinRes.count || 0, icon: 'ℹ️' },
+    { label: 'Total Sakit', value: sakitRes.count || 0, icon: '🤒' },
+    { label: 'Total Alpha', value: alphaRes.count || 0, icon: '❌' },
+    { label: 'Total XP', value: profile?.xp || 0, icon: '⭐' },
+    { label: 'Level', value: profile?.level || 1, icon: App.getLevelBadge(profile?.level || 1) },
+    { label: 'Login Streak', value: `${profile?.streak_login || 0} hari`, icon: '🔥' },
+    { label: 'Kontribusi', value: `${(profile?.xp || 0) > 100 ? 'Aktif' : 'Baru'}`, icon: '📊' },
+  ];
+
+  document.getElementById('stats-grid').innerHTML = stats.map(s => `
+    <div class="profile-stat hover-lift">
+      <div style="font-size:1.5rem;margin-bottom:4px">${s.icon}</div>
+      <div class="stat-num">${s.value}</div>
+      <div class="stat-label">${s.label}</div>
+    </div>`).join('');
+}
+loadStats();
+
+// Badges
+async function loadBadges() {
+  const [achievementsRes, userAchievementsRes] = await Promise.all([
+    supabaseClient.from('achievements').select('*'),
+    supabaseClient.from('user_achievements').select('achievement_id').eq('user_id', user.id),
+  ]);
+
+  const earned = new Set((userAchievementsRes.data || []).map(a => a.achievement_id));
+  const el = document.getElementById('badges-grid');
+
+  if (!achievementsRes.data?.length) { el.innerHTML = '<p style="color:var(--text-muted)">Belum ada badge tersedia</p>'; return; }
+
+  el.innerHTML = achievementsRes.data.map(a => `
+    <div class="badge-card ${earned.has(a.id) ? 'earned' : 'locked'}">
+      <span class="badge-icon">${a.icon}</span>
+      <div>
+        <div style="font-weight:600;font-size:.82rem">${a.nama}</div>
+        <div style="font-size:.72rem;color:var(--text-muted)">${a.deskripsi || ''}</div>
+      </div>
+    </div>`).join('');
+}
+loadBadges();
+
+// XP History
+async function loadXPHistory() {
+  const { data } = await supabaseClient.from('xp_logs').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(15);
+  const el = document.getElementById('xp-history');
+  if (!data?.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem">Belum ada riwayat XP</p>'; return; }
+
+  el.innerHTML = `<div class="table-wrapper"><table>
+    <thead><tr><th>Tanggal</th><th>Aktivitas</th><th style="text-align:right">XP</th></tr></thead>
+    <tbody>${data.map(x => `
+      <tr>
+        <td>${App.timeAgo(x.created_at)}</td>
+        <td>${x.reason}</td>
+        <td style="text-align:right;color:var(--success);font-weight:600">+${x.amount}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+loadXPHistory();
+</script>
+</body>
+</html>

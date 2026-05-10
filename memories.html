@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wall of Memories – Manajemen Kelas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app-layout">
+  <div class="main-content">
+    <header class="navbar">
+      <button id="sidebar-toggle">☰</button>
+      <h2 class="navbar-title">📸 Wall of Memories</h2>
+    </header>
+    <main class="page-content">
+      <div class="page-header">
+        <h1>Wall of Memories</h1>
+        <p>Galeri kenangan kelas kita</p>
+      </div>
+
+      <div class="filter-bar">
+        <button class="btn btn-primary" id="btn-upload-memory">📸 Upload Foto</button>
+      </div>
+
+      <div class="gallery-grid" id="gallery-grid">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Image Preview Modal -->
+      <div class="image-modal" id="image-modal">
+        <button class="image-modal-close" id="image-modal-close">✕</button>
+        <img id="image-modal-img" src="" alt="Preview" />
+      </div>
+
+      <!-- Upload Modal -->
+      <div class="modal-overlay" id="modal-memory">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Upload Foto Kenangan</h3>
+            <button class="modal-close" id="modal-memory-close">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Foto</label>
+              <div class="upload-area" id="memory-upload-area">
+                <div class="upload-icon">📸</div>
+                <p>Klik atau drag foto ke sini</p>
+                <p class="form-hint">JPG, PNG, GIF • Bisa upload banyak foto sekaligus</p>
+              </div>
+              <input type="file" id="memory-files" accept="image/*" multiple style="display:none" />
+              <div id="memory-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Caption</label>
+              <textarea class="form-control" id="memory-caption" placeholder="Tambahkan caption..." rows="2"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" id="modal-memory-cancel">Batal</button>
+            <button class="btn btn-primary" id="modal-memory-save">Upload</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comments Modal -->
+      <div class="modal-overlay" id="modal-comments">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Komentar</h3>
+            <button class="modal-close" id="modal-comments-close">✕</button>
+          </div>
+          <div class="modal-body">
+            <div id="comments-list" style="max-height:300px;overflow-y:auto;margin-bottom:16px"></div>
+            <div style="display:flex;gap:8px">
+              <input class="form-control" type="text" id="comment-input" placeholder="Tulis komentar..." />
+              <button class="btn btn-primary" id="btn-send-comment">Kirim</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module">
+import './app.js';
+import { supabaseClient } from './supabase.js';
+
+const user = await App.requireAuth();
+if (!user) throw new Error('No access');
+const isAdmin = user.profile?.role === 'admin';
+
+async function loadGallery() {
+  const { data } = await supabaseClient.from('memories').select('*').order('created_at', { ascending: false });
+  const el = document.getElementById('gallery-grid');
+  if (!data?.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📸</div><p>Belum ada foto kenangan. Upload foto pertamamu!</p></div>'; return; }
+
+  const { data: userLikes } = await supabaseClient.from('memory_likes').select('memory_id').eq('user_id', user.id);
+  const likedIds = new Set((userLikes || []).map(l => l.memory_id));
+
+  el.innerHTML = data.map(m => `
+    <div class="gallery-card animate-slide">
+      <img class="gallery-image" src="${m.image_url}" alt="${m.caption || 'Memory'}" onclick="previewImage('${m.image_url}')" loading="lazy" />
+      <div class="gallery-info">
+        <div class="gallery-caption">${m.caption || ''}</div>
+        <div class="gallery-meta">
+          <span>${m.uploader_name || 'Anonim'} • ${App.timeAgo(m.created_at)}</span>
+          <div style="display:flex;gap:6px">
+            <button class="like-btn ${likedIds.has(m.id) ? 'liked' : ''}" onclick="toggleMemoryLike('${m.id}', ${likedIds.has(m.id)})">❤️ ${m.likes || 0}</button>
+            <button class="btn btn-ghost btn-sm" onclick="showComments('${m.id}')">💬</button>
+            ${isAdmin || m.uploaded_by === user.id ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteMemory('${m.id}')">🗑️</button>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+loadGallery();
+
+// Image preview
+window.previewImage = (url) => {
+  document.getElementById('image-modal-img').src = url;
+  document.getElementById('image-modal').classList.add('show');
+};
+document.getElementById('image-modal-close').onclick = () => document.getElementById('image-modal').classList.remove('show');
+document.getElementById('image-modal').onclick = (e) => { if (e.target === document.getElementById('image-modal')) document.getElementById('image-modal').classList.remove('show'); };
+
+// Upload
+const uploadArea = document.getElementById('memory-upload-area');
+const fileInput = document.getElementById('memory-files');
+uploadArea.onclick = () => fileInput.click();
+uploadArea.ondragover = (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); };
+uploadArea.ondragleave = () => uploadArea.classList.remove('dragover');
+uploadArea.ondrop = (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); fileInput.files = e.dataTransfer.files; showPreview(); };
+fileInput.onchange = showPreview;
+
+function showPreview() {
+  const preview = document.getElementById('memory-preview');
+  preview.innerHTML = '';
+  Array.from(fileInput.files).forEach(f => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width:60px;height:60px;object-fit:cover;border-radius:8px';
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+const modal = document.getElementById('modal-memory');
+document.getElementById('btn-upload-memory').onclick = () => {
+  fileInput.value = '';
+  document.getElementById('memory-preview').innerHTML = '';
+  document.getElementById('memory-caption').value = '';
+  modal.classList.add('show');
+};
+document.getElementById('modal-memory-close').onclick = () => modal.classList.remove('show');
+document.getElementById('modal-memory-cancel').onclick = () => modal.classList.remove('show');
+
+document.getElementById('modal-memory-save').onclick = async () => {
+  if (!fileInput.files.length) { App.showToast('Pilih foto', 'error'); return; }
+  const caption = document.getElementById('memory-caption').value.trim();
+
+  App.showToast('Mengupload foto...', 'info');
+  for (const file of fileInput.files) {
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}_${file.name}`;
+    const { error: uploadErr } = await supabaseClient.storage.from('memories').upload(fileName, file);
+    if (uploadErr) { App.showToast('Gagal upload: ' + uploadErr.message, 'error'); continue; }
+    const { data: urlData } = supabaseClient.storage.from('memories').getPublicUrl(fileName);
+    await supabaseClient.from('memories').insert({
+      image_url: urlData.publicUrl,
+      caption,
+      uploaded_by: user.id,
+      uploader_name: user.profile?.full_name || user.email,
+    });
+  }
+  await App.addXP(user.id, 5, 'Upload memory');
+  App.showToast('Foto berhasil diupload! +5 XP');
+  modal.classList.remove('show');
+  loadGallery();
+};
+
+// Like
+window.toggleMemoryLike = async (memoryId, isLiked) => {
+  if (isLiked) {
+    await supabaseClient.from('memory_likes').delete().eq('memory_id', memoryId).eq('user_id', user.id);
+    const { data: m } = await supabaseClient.from('memories').select('likes').eq('id', memoryId).single();
+    await supabaseClient.from('memories').update({ likes: Math.max(0, (m?.likes || 1) - 1) }).eq('id', memoryId);
+  } else {
+    await supabaseClient.from('memory_likes').insert({ memory_id: memoryId, user_id: user.id });
+    const { data: m } = await supabaseClient.from('memories').select('likes').eq('id', memoryId).single();
+    await supabaseClient.from('memories').update({ likes: (m?.likes || 0) + 1 }).eq('id', memoryId);
+  }
+  loadGallery();
+};
+
+// Comments
+let currentMemoryId = null;
+window.showComments = async (memoryId) => {
+  currentMemoryId = memoryId;
+  const { data } = await supabaseClient.from('memory_comments').select('*').eq('memory_id', memoryId).order('created_at');
+  const el = document.getElementById('comments-list');
+  el.innerHTML = (data || []).map(c => `
+    <div style="margin-bottom:12px;padding:10px;background:var(--surface-2);border-radius:var(--radius)">
+      <div style="font-weight:600;font-size:.82rem">${c.user_name || 'Anonim'} <span style="color:var(--text-muted);font-weight:400">${App.timeAgo(c.created_at)}</span></div>
+      <div style="font-size:.88rem;margin-top:4px">${c.komentar}</div>
+    </div>`).join('') || '<p style="color:var(--text-muted);font-size:.85rem">Belum ada komentar</p>';
+  document.getElementById('modal-comments').classList.add('show');
+};
+document.getElementById('modal-comments-close').onclick = () => document.getElementById('modal-comments').classList.remove('show');
+
+document.getElementById('btn-send-comment').onclick = async () => {
+  const input = document.getElementById('comment-input');
+  const komentar = input.value.trim();
+  if (!komentar || !currentMemoryId) return;
+  await supabaseClient.from('memory_comments').insert({
+    memory_id: currentMemoryId,
+    user_id: user.id,
+    user_name: user.profile?.full_name || user.email,
+    komentar: App.filterBadWords(komentar),
+  });
+  input.value = '';
+  showComments(currentMemoryId);
+};
+
+// Delete
+window.deleteMemory = async (id) => {
+  if (!(await App.confirmDelete('Hapus foto ini?'))) return;
+  await supabaseClient.from('memories').delete().eq('id', id);
+  App.showToast('Foto dihapus');
+  loadGallery();
+};
+</script>
+</body>
+</html>
